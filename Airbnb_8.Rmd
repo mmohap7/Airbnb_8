@@ -108,6 +108,11 @@ eda.cor
 
 ```{r}
 
+listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) # make price into a numeric variable
+listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee))
+listings$extra_people = as.numeric(gsub("[\\$,]", "", listings$extra_people))
+listings$guests_included = as.numeric(gsub("[\\$,]", "", listings$guests_included))
+
 listings <- listings %>%
   mutate(cleaning_fee = case_when(
     is.na(cleaning_fee) ~ 0, 
@@ -134,12 +139,7 @@ listings <- listings %>%
 
 
 
-listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) # make price into a numeric variable
-listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee))
-listings$extra_people = as.numeric(gsub("[\\$,]", "", listings$extra_people))
-listings$guests_included = as.numeric(gsub("[\\$,]", "", listings$guests_included))
-
-# create new variablefor 4 nights using price, guests_included, cleaning_fee and extra_people
+# create new variable for 4 nights using price, guests_included, cleaning_fee and extra_people
 listings_new <- listings %>%
   mutate(price_4_nights = 
            ifelse(guests_included <= 1,
@@ -177,6 +177,8 @@ max_p4n
 ```
 Explain why we continue to work with log(price_4_nights)
 
+
+### Model 1
 ```{r}
 
 # create the new variable of log(price_4_nights)
@@ -198,31 +200,9 @@ Interpret the coefficient review_scores_rating in terms of price_4_nights:
 
 Interpret the coefficient of prop_type_simplified in terms of price_4_nights:
 
+### Model 2
 ```{r}
-
-# create model3 with adding bathrooms, bedrooms, beds, oaccomodates to model 3 -> test VIF
-model3<-lm(price_4_nights_log ~
-              # prop_type_simplified +
-             number_of_reviews +
-             review_scores_rating +
-             room_type + 
-             bathrooms +
-             bedrooms +
-             beds + 
-             accomodates, 
-            data = listings_log)
-model3 %>% tidy(conf.int=TRUE)
-model3 %>% glance()
-
-```
-
-The room type is a significant predictor of price etc... 
-
-## Further variables/questions to explore on our own
-
-```{r}
-
-# create model3 with adding room_type to model 1
+# create model2 with adding bathrooms, bedrooms, beds, accomodates to model 1
 model2<-lm(price_4_nights_log ~
               # prop_type_simplified +
               number_of_reviews +
@@ -231,6 +211,67 @@ model2<-lm(price_4_nights_log ~
             data = listings_log)
 model2 %>% tidy(conf.int=TRUE)
 model2 %>% glance()
+
+```
+
+Interpret if  if room_type is a significant predictor 
+
+
+# Additional questions
+### Model 3
+```{r}
+# create model3 with adding bathrooms, bedrooms, beds, accommodates to model 3 -> test VIF
+model3<-lm(price_4_nights_log ~
+              # prop_type_simplified +
+             number_of_reviews +
+             review_scores_rating +
+             room_type + 
+             bathrooms +
+             bedrooms +
+             beds + 
+             accommodates, 
+            data = listings_log)
+model3 %>% tidy(conf.int=TRUE)
+model3 %>% glance()
+
+```
+
+```{r}
+# create model4 with adding host_is_superhost
+model4<-lm(price_4_nights_log ~
+              # prop_type_simplified +
+             number_of_reviews +
+             review_scores_rating +
+             room_type + 
+             # bathrooms +
+             # bedrooms +
+             # beds + 
+             # accommodates +
+             host_is_superhost, 
+            data = listings_log)
+model3 %>% tidy(conf.int=TRUE)
+model3 %>% glance()
+
+```
+
+
+
+```{r}
+# create model5 with adding is_location_exact == TRUE
+model3<-lm(price_4_nights_log ~
+              # prop_type_simplified +
+             number_of_reviews +
+             review_scores_rating +
+             room_type + 
+             bathrooms +
+             bedrooms +
+             beds + 
+             accommodates +
+             host_is_superhost +
+             # is_location_exact == TRUE, 
+            data = listings_log)
+model3 %>% tidy(conf.int=TRUE)
+model3 %>% glance()
 
 ```
 
