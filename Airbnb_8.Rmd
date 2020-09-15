@@ -222,7 +222,7 @@ listings_log <- listings_new %>%
 
 # create  model1 of price_4_nights with review_scores_ratings
 model1<-lm(price_4_nights_log ~
-              # prop_type_simplified +
+              prop_type_simplified +
               number_of_reviews +
               review_scores_rating, 
             data = listings_log)
@@ -231,6 +231,7 @@ model1 %>% glance()
 
 ```
 Interpret the coefficient review_scores_rating in terms of price_4_nights:
+for every increase in rating by 1 point, the price goes up by 0.0023$ ???
 
 Interpret the coefficient of prop_type_simplified in terms of price_4_nights:
 
@@ -238,17 +239,20 @@ Interpret the coefficient of prop_type_simplified in terms of price_4_nights:
 ```{r}
 # create model2 with adding bathrooms, bedrooms, beds, accomodates to model 1
 model2<-lm(price_4_nights_log ~
-              # prop_type_simplified +
-              number_of_reviews +
-              review_scores_rating +
-              room_type, 
+             prop_type_simplified +
+             number_of_reviews +
+             review_scores_rating +
+             room_type, 
             data = listings_log)
 model2 %>% tidy(conf.int=TRUE)
 model2 %>% glance()
 
 ```
 
-Interpret if  if room_type is a significant predictor 
+Interpret if if room_type is a significant predictor 
+It is 
+
+Model 2: 24% 
 
 
 # Additional questions
@@ -256,7 +260,7 @@ Interpret if  if room_type is a significant predictor
 ```{r}
 # create model3 with adding bathrooms, bedrooms, beds, accommodates to model 3 -> test VIF
 model3<-lm(price_4_nights_log ~
-              # prop_type_simplified +
+            prop_type_simplified +
              number_of_reviews +
              review_scores_rating +
              room_type + 
@@ -269,19 +273,30 @@ model3 %>% tidy(conf.int=TRUE)
 model3 %>% glance()
 
 ```
+Model 3: 41%
 
+
+### Model 4
 ```{r}
+
+typeof(listings_log$super_host)
+
+listings_log %>%
+  mutate(super_host = case_when(
+    host_is_superhost == TRUE ~ 1, 
+    host_is_superhost == FALSE ~ 0))
+
 # create model4 with adding host_is_superhost
 model4<-lm(price_4_nights_log ~
-              # prop_type_simplified +
+            prop_type_simplified +
              number_of_reviews +
              review_scores_rating +
              room_type + 
-             # bathrooms +
-             # bedrooms +
-             # beds + 
-             # accommodates +
-             host_is_superhost, 
+             bathrooms +
+             bedrooms +
+             beds +
+             accommodates +
+             # super_host, 
             data = listings_log)
 model3 %>% tidy(conf.int=TRUE)
 model3 %>% glance()
@@ -292,20 +307,20 @@ model3 %>% glance()
 
 ```{r}
 # create model5 with adding is_location_exact == TRUE
-model3<-lm(price_4_nights_log ~
-              # prop_type_simplified +
-             number_of_reviews +
-             review_scores_rating +
-             room_type + 
-             bathrooms +
-             bedrooms +
-             beds + 
-             accommodates +
-             host_is_superhost +
-             # is_location_exact == TRUE, 
-            data = listings_log)
-model3 %>% tidy(conf.int=TRUE)
-model3 %>% glance()
+# model3<-lm(price_4_nights_log ~
+#               # prop_type_simplified +
+#              number_of_reviews +
+#              review_scores_rating +
+#              room_type + 
+#              bathrooms +
+#              bedrooms +
+#              beds + 
+#              accommodates +
+#              host_is_superhost +
+#              # is_location_exact == TRUE, 
+#             data = listings_log)
+# model3 %>% tidy(conf.int=TRUE)
+# model3 %>% glance()
 
 ```
 
