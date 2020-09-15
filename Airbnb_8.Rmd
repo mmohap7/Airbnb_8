@@ -1,0 +1,63 @@
+---
+title: "Airbnb_8"
+output: html_document
+---
+
+```{r load_packages, warning=FALSE, message=FALSE, echo=FALSE}
+library(tidyverse)
+library(mosaic)
+library(ggfortify)
+library(moderndive)
+library(janitor)
+library(huxtable)
+library(here)
+library(broom)
+library(skimr)
+library(GGally)
+library(car)
+library(vroom)
+```
+
+price = cost per night
+
+cleaning_fee: cleaning fee
+
+extra_people: charge for having more than 1 person
+
+property_type: type of accommodation (House, Apartment, etc.)
+
+room_type:
+
+Entire home/apt (guests have entire place to themselves)
+Private room (Guests have private room to sleep, all other rooms shared)
+Shared room (Guests sleep in room shared with others)
+number_of_reviews: Total number of reviews for the listing
+
+review_scores_rating: Average review score (0 - 100)
+
+longitude , latitude: geographical coordinates to help us locate the listing
+
+neighbourhood*: three variables on a few major neighbourhoods in each city
+
+```{r cars}
+listings <- vroom("http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/listings.csv.gz") %>% 
+    clean_names()  #get the listings for Copenhagen
+```
+
+
+
+```{r}
+glimpse(listings) # Looking at the raw values
+skim(listings) #Computing summary statistics of the variables of interest, or finding NAs
+```
+
+
+
+```{r  echo=FALSE}
+listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) # make price into a numeric variable
+listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee))
+
+skim(listings) #check if all the variables are in the correct type
+```
+
+
