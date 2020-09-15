@@ -46,7 +46,7 @@ longitude , latitude: geographical coordinates to help us locate the listing
 
 neighbourhood*: three variables on a few major neighbourhoods in each city
 
-```{r cars}
+```{r cars, cache=TRUE}
 listings <- vroom("http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/listings.csv.gz") %>% 
     #get the listings for Copenhagen
     clean_names()  
@@ -54,7 +54,7 @@ listings <- vroom("http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2
 
 
 
-```{r, exploration, echo=FALSE}
+```{r, exploration, echo=FALSE, cache=TRUE}
 # Looking at the raw values
 glimpse(listings) 
 
@@ -67,7 +67,7 @@ skim(listings)
 
 We tried first to convert some of the data from characters to numeric (i.e “$176.00”--. 176)
 
-```{r Cleaning data,echo=FALSE}
+```{r cleaning data,echo=FALSE}
 # make price into a numeric variable
 listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) 
 
@@ -145,11 +145,9 @@ listings_categorical<- listings %>%
   select(price, neighbourhood_cleansed, room_type,  room_type,  property_type,  host_is_superhost)
 
 
-
-
-
 ```
 =======
+
 ## First questions
 
 ```{r}
@@ -197,8 +195,6 @@ listings_new <- listings %>%
 #model_1 %>% glance()
 
 
-
-
 ```
 
 ```{r,fig.width=20}
@@ -221,7 +217,9 @@ max_p4n<-density(listings_new$price_4_nights)$x[which.max(density(listings_new$p
 max_p4n
 
 ```
-Explain why we continue to work with log(price_4_nights)
+
+Answer: we should use variable log(price_4_nights). Looking at the desity plots of
+price_4_nights and log(price_4_nights), we can see clearly that log(price_4_nights) is more close to a normal distribution, while most values in price_4_nights are cramped within a very small range(what function is it called?????)
 
 
 ### Model 1
@@ -236,10 +234,12 @@ listings_log <- listings_new %>%
 model1<-lm(price_4_nights_log ~
               prop_type_simplified +
               number_of_reviews +
-              review_scores_rating, 
+              review_scores_rating +
+             NULL, 
             data = listings_log)
 model1 %>% tidy(conf.int=TRUE)
 model1 %>% glance()
+car::vif(model1)
 
 ```
 Interpret the coefficient review_scores_rating in terms of price_4_nights:
@@ -254,10 +254,13 @@ model2<-lm(price_4_nights_log ~
              prop_type_simplified +
              number_of_reviews +
              review_scores_rating +
-             room_type, 
+             room_type +
+             NULL, 
             data = listings_log)
 model2 %>% tidy(conf.int=TRUE)
 model2 %>% glance()
+
+car::vif(model2)
 
 ```
 
@@ -279,24 +282,29 @@ model3<-lm(price_4_nights_log ~
              bathrooms +
              bedrooms +
              beds + 
-             accommodates, 
+             accommodates +
+             NULL, 
             data = listings_log)
 model3 %>% tidy(conf.int=TRUE)
 model3 %>% glance()
 
+car::vif(model3)
+
 ```
+
+The number of bathrooms, bedrooms, beds, and size of the house (accomodates) are all significant predictors of price_4_nights. However, there might be a problem with multi-collinearity since intuitively bathrooms, bedrooms and beds should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceotable range.
+
 Model 3: 41%
 
 
 ### Model 4
 ```{r}
+#
+typeof(listings_log$host_is_superhost)
 
-typeof(listings_log$super_host)
+listings_log<-listings_log %>%
+  mutate(superhost = ifelse(host_is_superhost == TRUE, 1,0))
 
-listings_log %>%
-  mutate(super_host = case_when(
-    host_is_superhost == TRUE ~ 1, 
-    host_is_superhost == FALSE ~ 0))
 
 # create model4 with adding host_is_superhost
 model4<-lm(price_4_nights_log ~
@@ -308,33 +316,88 @@ model4<-lm(price_4_nights_log ~
              bedrooms +
              beds +
              accommodates +
-             # super_host, 
+             superhost +
+             NULL,
             data = listings_log)
-model3 %>% tidy(conf.int=TRUE)
-model3 %>% glance()
+model4 %>% tidy(conf.int=TRUE)
+model4 %>% glance()
+
+car::vif(model4)
 
 ```
 
+Most owners advertise the exact location of their listing (is_location_exact == TRUE), while a non-trivial proportion don’t. After controlling for other variables, is a listing’s exact location a significant predictor of price_4_nights?
 
-
+### Model 5
 ```{r}
 # create model5 with adding is_location_exact == TRUE
-# model3<-lm(price_4_nights_log ~
-#               # prop_type_simplified +
-#              number_of_reviews +
-#              review_scores_rating +
-#              room_type + 
-#              bathrooms +
-#              bedrooms +
-#              beds + 
-#              accommodates +
-#              host_is_superhost +
-#              # is_location_exact == TRUE, 
-#             data = listings_log)
-# model3 %>% tidy(conf.int=TRUE)
-# model3 %>% glance()
+model5<-lm(price_4_nights_log ~
+            prop_type_simplified +
+             number_of_reviews +
+             review_scores_rating +
+             room_type +
+             bathrooms +
+             bedrooms +
+             beds +
+             accommodates +
+             superhost +
+             is_location_exact +
+             NULL,
+             data = listings_log)
+model5 %>% tidy(conf.int=TRUE)
+model5 %>% glance()
 
 ```
+
+
+For all cities, there are 3 variables that relate to neighbourhoods: neighbourhood, neighbourhood_cleansed, and neighbourhood_group_cleansed. There are typically more than 20 neighbourhoods in each city, and it wouldn’t make sense to include them all in your model. Use your city knowledge, or ask someone with city knowledge, and see whether you can group neighbourhoods together so the majority of listings falls in fewer (5-6 max) geographical areas. You would thus need to create a new categorical variabale neighbourhood_simplified and determine whether location is a predictor of price_4_nights
+```{r}
+
+# create variable neighbourhood_simplified
+
+# create model5 by adding neighbourhood_simplified
+model6<-lm(price_4_nights_log ~
+            prop_type_simplified +
+             number_of_reviews +
+             review_scores_rating +
+             room_type +
+             bathrooms +
+             bedrooms +
+             beds +
+             accommodates +
+             superhost +
+             is_location_exact +
+             #neighbourhood_simplified+
+             NULL,
+             data = listings_log)
+model6 %>% tidy(conf.int=TRUE)
+model6 %>% glance()
+```
+
+
+What is the effect of cancellation_policy on price_4_nights, after we control for other variables?
+```{r}
+
+# create model5 by adding cancellation_policy
+model6<-lm(price_4_nights_log ~
+            prop_type_simplified +
+             number_of_reviews +
+             review_scores_rating +
+             room_type +
+             bathrooms +
+             bedrooms +
+             beds +
+             accommodates +
+             superhost +
+             is_location_exact +
+             #neighbourhood_simplified +
+             #cancellation_policy +
+             NULL,
+             data = listings_log)
+model6 %>% tidy(conf.int=TRUE)
+model6 %>% glance()
+```
+
 
 
 >>>>>>> 76f6fd0eeeaed16b6c1052aac00e857f3a7515e5
