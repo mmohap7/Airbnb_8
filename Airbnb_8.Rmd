@@ -106,7 +106,7 @@ listings%>%
   arrange(desc(count))
 
 #Filtering the airbnb data so that it only includes observations less than or equal to 4
-listings<-listings%>%
+listings_filtered_4nights <- listings %>%
   filter(minimum_nights <= 4)
 
 ```
@@ -116,7 +116,9 @@ We see that there is a dramatic decrease of the number of listing from 5 days an
 
 ```{r, echo=FALSE}
 
-leaflet(data = filter(listings, minimum_nights <= 4)) %>% 
+#Taking the filtered listings with a min of 4 nights and create a map of the apartments in Copenhagen
+listings_filtered_4nights %>% 
+leaflet() %>% 
   addProviderTiles("OpenStreetMap.Mapnik") %>% 
   addCircleMarkers(lng = ~longitude, 
                    lat = ~latitude, 
@@ -124,11 +126,64 @@ leaflet(data = filter(listings, minimum_nights <= 4)) %>%
                    fillOpacity = 0.4, 
                    popup = ~listing_url,
                    label = ~property_type,
+                   #to get a better overview of the number and location of apartments in Copenhagen, a clustered map was chosen instead of the original point mapping.
                    clusterOptions = markerClusterOptions()
                   )
+  
+
+```
+```{r}
+
+#Calculated median price per night for each property type
+average_per_proptype <- listings_filtered_4nights %>% 
+  group_by(prop_type_simplified) %>% 
+  summarise(median_price = median(price))
+
+#Plotted a bar chart with median price per night for each property type
+average_per_proptype %>% 
+  ggplot(aes(
+    x = reorder(prop_type_simplified, desc(median_price)),
+    y = median_price
+  )) +
+  geom_col() +
+  labs(
+    title = "Median price per night per property type",
+    x = "",
+    y = "Median price per night",
+    caption = "Source: AirBnB"
+  )
+
+#Calculated median price per night for each room type
+median_per_roomtype <- listings_filtered_4nights %>% 
+  group_by(room_type) %>% 
+  summarise(median_price = median(price))
+
+#Price per night for each room type
+median_per_roomtype %>% 
+  ggplot(aes(
+    x = reorder(room_type, desc(median_price)),
+    y = median_price
+  )) +
+  geom_col() +
+  labs(
+    title = "Median price per night per room type",
+    x = "",
+    y = "Median price per night",
+    caption = "Source: AirBnB"
+  )
+
+listings<-listings%>%
+  filter(minimum_nights == 4)
+
+listings_matrix<- listings %>%
+  select(price, square_feet ,bedrooms, bathrooms) 
+
+ggpairs(listings_matrix, columns = 1:4)
 
 
 ```
+
+
 # REGRESSION
 
 ```{r, echo=FALSE}
