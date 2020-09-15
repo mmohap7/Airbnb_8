@@ -4,6 +4,11 @@ output: html_document
 ---
 
 ```{r load_packages, warning=FALSE, message=FALSE, echo=FALSE}
+
+list.of.packages <- c("ggplot2", "Rcpp", "tidyverse", "mosaic", "ggfortify", "moderndive", "janitor", "huxtable", "here", "broom", "skimr", "GGally", "car", "vroom")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
 library(tidyverse)
 library(mosaic)
 library(ggfortify)
