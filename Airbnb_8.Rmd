@@ -16,6 +16,7 @@ library(skimr)
 library(GGally)
 library(car)
 library(vroom)
+library(GGally)
 ```
 
 price = cost per night
@@ -51,13 +52,186 @@ glimpse(listings) # Looking at the raw values
 skim(listings) #Computing summary statistics of the variables of interest, or finding NAs
 ```
 
-
+#EDA
 
 ```{r  echo=FALSE}
 listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) # make price into a numeric variable
 listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee))
 
 skim(listings) #check if all the variables are in the correct type
+```
+```{r}
+
+listings_eda<- listings %>%
+  select(price, accommodates, beds, guests_included, review_scores_rating, number_of_reviews, neighbourhood_cleansed,   room_type, bedrooms, bathrooms, property_type, cleaning_fee, host_is_superhost)
+
+listings_eda
+
+listings_numeric<- listings %>%
+  select(price, accommodates, beds, guests_included, review_scores_rating, number_of_reviews,  bedrooms,  bathrooms,  cleaning_fee,extra_people) 
+#%>%
+  #filter(is.na())
+
+
+skim(listings_numeric)
+
+#listings <- listings %>%
+  #mutate(cleaning_fee = case_when(
+   # is.na(cleaning_fee) ~ mean(), 
+    #TRUE ~ cleaning_fee
+  #))
+
+```
+```{r}
+library(corrplot)
+leaflet(data = filter(listings, minimum_nights <= 4)) %>% 
+  addProviderTiles("OpenStreetMap.Mapnik") %>% 
+  addCircleMarkers(lng = ~longitude, 
+                   lat = ~latitude, 
+                   radius = 1, 
+                   fillColor = "blue", 
+                   fillOpacity = 0.4, 
+                   popup = ~listing_url,
+                   label = ~property_type
+                    )
+
+eda.cor= cor(listings_numeric)
+
+corrplot(cor(listings_numeric))
+
+eda.cor
+
+```
+# REGRESSION
+
+## First questions
+
+```{r}
+
+listings <- listings %>%
+  mutate(cleaning_fee = case_when(
+    is.na(cleaning_fee) ~ 0, 
+    TRUE ~ cleaning_fee
+  ))
+
+listings <- listings %>%
+  mutate(price = case_when(
+    is.na(price) ~ 0, 
+    TRUE ~ price
+  ))
+
+listings <- listings %>%
+  mutate(extra_people = case_when(
+    is.na(extra_people) ~ 0, 
+    TRUE ~ extra_people
+  ))
+
+listings <- listings %>%
+  mutate(guests_included = case_when(
+    is.na(guests_included) ~ 0, 
+    TRUE ~ guests_included
+  ))
+
+
+
+listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) # make price into a numeric variable
+listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee))
+listings$extra_people = as.numeric(gsub("[\\$,]", "", listings$extra_people))
+listings$guests_included = as.numeric(gsub("[\\$,]", "", listings$guests_included))
+
+# create new variablefor 4 nights using price, guests_included, cleaning_fee and extra_people
+listings_new <- listings %>%
+  mutate(price_4_nights = 
+           ifelse(guests_included <= 1,
+                  (price + extra_people) * 4 + cleaning_fee,
+                  (price) * 4 + cleaning_fee))
+  
+#model_1<-lm(price_4_nights~cleaning_fee,data=listings_new)
+#model_1 %>% tidy(conf.int=TRUE)
+#model_1 %>% glance()
+
+
+
+
+```
+
+```{r,fig.width=20}
+
+# density plots for price_4_nights
+density.default(listings_new$price_4_nights)
+
+# plot density of price_4_nights
+ggplot(listings_new,aes(x=price_4_nights))+
+  geom_density() +
+  geom_vline(xintercept = density(listings_new$price_4_nights)$x[which.max(density(listings_new$price_4_nights)$y)])
+
+# plot density of log(price_4_nights)
+ggplot(listings_new,aes(x=log(price_4_nights)))+
+  geom_density()
+
+# calculate maximum (most often?) occuring price 4 nights value is :
+max_p4n<-density(listings_new$price_4_nights)$x[which.max(density(listings_new$price_4_nights)$y)]
+
+max_p4n
+
+```
+Explain why we continue to work with log(price_4_nights)
+
+```{r}
+
+# create the new variable of log(price_4_nights)
+listings_log <- listings_new %>%
+  mutate(price_4_nights_log = log10(price_4_nights)) 
+  
+
+# create  model1 of price_4_nights with review_scores_ratings
+model1<-lm(price_4_nights_log ~
+              # prop_type_simplified +
+              number_of_reviews +
+              review_scores_rating, 
+            data = listings_log)
+model1 %>% tidy(conf.int=TRUE)
+model1 %>% glance()
+
+```
+Interpret the coefficient review_scores_rating in terms of price_4_nights:
+
+Interpret the coefficient of prop_type_simplified in terms of price_4_nights:
+
+```{r}
+
+# create model3 with adding bathrooms, bedrooms, beds, oaccomodates to model 3 -> test VIF
+model3<-lm(price_4_nights_log ~
+              # prop_type_simplified +
+             number_of_reviews +
+             review_scores_rating +
+             room_type + 
+             bathrooms +
+             bedrooms +
+             beds + 
+             accomodates, 
+            data = listings_log)
+model3 %>% tidy(conf.int=TRUE)
+model3 %>% glance()
+
+```
+
+The room type is a significant predictor of price etc... 
+
+## Further variables/questions to explore on our own
+
+```{r}
+
+# create model3 with adding room_type to model 1
+model2<-lm(price_4_nights_log ~
+              # prop_type_simplified +
+              number_of_reviews +
+              review_scores_rating +
+              room_type, 
+            data = listings_log)
+model2 %>% tidy(conf.int=TRUE)
+model2 %>% glance()
+
 ```
 
 
