@@ -42,20 +42,25 @@ neighbourhood*: three variables on a few major neighbourhoods in each city
 
 ```{r cars}
 listings <- vroom("http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/listings.csv.gz") %>% 
-    clean_names()  #get the listings for Copenhagen
+    #get the listings for Copenhagen
+    clean_names()  
 ```
 
 
 
 ```{r, exploration, echo=FALSE}
-glimpse(listings) # Looking at the raw values
-skim(listings) #Computing summary statistics of the variables of interest, or finding NAs
+# Looking at the raw values
+glimpse(listings) 
+
+#Computing summary statistics of the variables of interest, or finding NAs
+skim(listings) 
 
 ```
 
 #EDA
 
 We tried first to convert some of the data from characters to numeric (i.e “$176.00”--. 176)
+
 ```{r Cleaning data,echo=FALSE}
 # make price into a numeric variable
 listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) 
@@ -90,8 +95,17 @@ listings <- listings %>%
 #check if all the variables are in the correct type
 skim(listings) 
 
-
 ```
+```{r echo=FALSE}
+
+listings%>% 
+  group_by(minimum_nights)%>%
+  summarise(count= n())%>%
+  arrange(desc(count))
+```
+> The most common values are 2,3,1,4,5,7.That means renting for a week or less.
+We see that people 
+
 
 ```{r echo=FALSE}
 
@@ -99,6 +113,8 @@ listings %>%
   count(property_type, prop_type_simplified) %>%
   arrange(desc(n)) 
 ```
+
+
 
 ```{r}
 library(corrplot)
