@@ -68,12 +68,10 @@ listings_eda<- listings %>%
 listings_eda
 
 listings_numeric<- listings %>%
-  select(price, accommodates, beds, guests_included, review_scores_rating, number_of_reviews,  bedrooms,  bathrooms,  cleaning_fee) 
+  select(price, accommodates, beds, guests_included, review_scores_rating, number_of_reviews,  bedrooms,  bathrooms,  cleaning_fee,extra_people) 
 #%>%
   #filter(is.na())
 
-listings_categorical<- listings %>%
-  select(price, neighbourhood_cleansed, room_type,  room_type,  property_type,  host_is_superhost)
 
 skim(listings_numeric)
 
@@ -105,4 +103,86 @@ eda.cor
 
 ```
 # REGRESSION
+
+
+```{r}
+
+listings <- listings %>%
+  mutate(cleaning_fee = case_when(
+    is.na(cleaning_fee) ~ 0, 
+    TRUE ~ cleaning_fee
+  ))
+
+listings <- listings %>%
+  mutate(price = case_when(
+    is.na(price) ~ 0, 
+    TRUE ~ price
+  ))
+
+listings <- listings %>%
+  mutate(extra_people = case_when(
+    is.na(extra_people) ~ 0, 
+    TRUE ~ extra_people
+  ))
+
+listings <- listings %>%
+  mutate(guests_included = case_when(
+    is.na(guests_included) ~ 0, 
+    TRUE ~ guests_included
+  ))
+
+
+
+listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) # make price into a numeric variable
+listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee))
+listings$extra_people = as.numeric(gsub("[\\$,]", "", listings$extra_people))
+listings$guests_included = as.numeric(gsub("[\\$,]", "", listings$guests_included))
+
+#Equation computing price for 4 nights using price, cleaning_fee and extra_people
+
+guests_included=1
+listings_new<-listings%>%
+  mutate(price_4_nights= ifelse(guests_included<=1,(price+extra_people)*4+cleaning_fee,
+                              (price)*4+cleaning_fee))
+  
+
+
+
+#model_1<-lm(price_4_nights~cleaning_fee,data=listings_new)
+#model_1 %>% tidy(conf.int=TRUE)
+#model_1 %>% glance()
+
+
+
+
+```
+
+```{r,fig.width=20}
+#Density plots for price_4_nights
+
+density.default(listings_new$price_4_nights)
+
+ggplot(listings_new,aes(x=log(price_4_nights)))+
+  geom_density()
+  #geom_vline(xintercept = density(listings_new$price_4_nights)$x[which.max(density(listings_new$price_4_nights)$y)])
+
+
+#Maximum occuring price 4 nights value is :
+
+max_p4n<-density(listings_new$price_4_nights)$x[which.max(density(listings_new$price_4_nights)$y)]
+
+max_p4n
+
+```
+
+
+
+```{r}
+#Regrssion model of price_4_nights with review_scores_ratings
+model_1<-lm(price_4_nights~review_scores_rating+number_of_reviews,data=listings_new)
+model_1 %>% tidy(conf.int=TRUE)
+model_1 %>% glance()
+
+
+```
 
