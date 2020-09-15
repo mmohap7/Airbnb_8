@@ -16,6 +16,7 @@ library(skimr)
 library(GGally)
 library(car)
 library(vroom)
+library(GGally)
 ```
 
 price = cost per night
@@ -58,6 +59,25 @@ listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) # make price int
 listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee))
 
 skim(listings) #check if all the variables are in the correct type
+```
+```{r}
+
+listings_eda<- listings %>%
+  select(price, accommodates, beds, guests_included, review_scores_rating, number_of_reviews, neighbourhood_cleansed, room_type, bedrooms, room_type, bedrooms, bathrooms, property_type, cleaning_fee, host_is_superhost)
+
+listings_eda
+```
+```{r}
+leaflet(data = filter(listings, minimum_nights <= 4)) %>% 
+  addProviderTiles("OpenStreetMap.Mapnik") %>% 
+  addCircleMarkers(lng = ~longitude, 
+                   lat = ~latitude, 
+                   radius = 1, 
+                   fillColor = "blue", 
+                   fillOpacity = 0.4, 
+                   popup = ~listing_url,
+                   label = ~property_type
+                    )
 ```
 
 
