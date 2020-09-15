@@ -96,19 +96,24 @@ listings <- listings %>%
 skim(listings) 
 
 ```
-```{r echo=FALSE}
+```{r filtering, echo=FALSE}
 
-listings%>% 
+#displaying table with the count in descending order for the minimum nights
+listings%>%     
   group_by(minimum_nights)%>%
   summarise(count= n())%>%
   arrange(desc(count))
+
+#Filtering the airbnb data so that it only includes observations less than or equal to 4
+listings<-listings%>%
+  filter(minimum_nights <= 4)
+
 ```
-> The most common values are 2,3,1,4,5,7.That means renting for a week or less.
-We see that people 
+> The most common values are 2,3,1,4,5.That means renting for a five days or less.
+We see that there is a dramatic decrease of the number of listing from 5 days and above and this may be due to the fact that people staying for lomger periods are not here for travel purposes but for other reasons such as work, living etc.
 
 
 ```{r echo=FALSE}
-
 listings %>%
   count(property_type, prop_type_simplified) %>%
   arrange(desc(n)) 
@@ -116,8 +121,9 @@ listings %>%
 
 
 
-```{r}
+```{r, echo=FALSE}
 library(corrplot)
+
 leaflet(data = filter(listings, minimum_nights <= 4)) %>% 
   addProviderTiles("OpenStreetMap.Mapnik") %>% 
   addCircleMarkers(lng = ~longitude, 
