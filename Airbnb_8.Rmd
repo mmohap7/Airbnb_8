@@ -52,7 +52,7 @@ glimpse(listings) # Looking at the raw values
 skim(listings) #Computing summary statistics of the variables of interest, or finding NAs
 ```
 
-
+#EDA
 
 ```{r  echo=FALSE}
 listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) # make price into a numeric variable
@@ -63,11 +63,29 @@ skim(listings) #check if all the variables are in the correct type
 ```{r}
 
 listings_eda<- listings %>%
-  select(price, accommodates, beds, guests_included, review_scores_rating, number_of_reviews, neighbourhood_cleansed, room_type, bedrooms, room_type, bedrooms, bathrooms, property_type, cleaning_fee, host_is_superhost)
+  select(price, accommodates, beds, guests_included, review_scores_rating, number_of_reviews, neighbourhood_cleansed,   room_type, bedrooms, bathrooms, property_type, cleaning_fee, host_is_superhost)
 
 listings_eda
+
+listings_numeric<- listings %>%
+  select(price, accommodates, beds, guests_included, review_scores_rating, number_of_reviews,  bedrooms,  bathrooms,  cleaning_fee) 
+#%>%
+  #filter(is.na())
+
+listings_categorical<- listings %>%
+  select(price, neighbourhood_cleansed, room_type,  room_type,  property_type,  host_is_superhost)
+
+skim(listings_numeric)
+
+#listings <- listings %>%
+  #mutate(cleaning_fee = case_when(
+   # is.na(cleaning_fee) ~ mean(), 
+    #TRUE ~ cleaning_fee
+  #))
+
 ```
 ```{r}
+library(corrplot)
 leaflet(data = filter(listings, minimum_nights <= 4)) %>% 
   addProviderTiles("OpenStreetMap.Mapnik") %>% 
   addCircleMarkers(lng = ~longitude, 
@@ -78,6 +96,13 @@ leaflet(data = filter(listings, minimum_nights <= 4)) %>%
                    popup = ~listing_url,
                    label = ~property_type
                     )
-```
 
+eda.cor= cor(listings_numeric)
+
+corrplot(cor(listings_numeric))
+
+eda.cor
+
+```
+# REGRESSION
 
