@@ -64,6 +64,58 @@ We tried first to convert some of the data from characters to numeric (i.e “$1
 ```{r Cleaning data,echo=FALSE}
 # make price into a numeric variable
 listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) 
+<<<<<<< HEAD
+
+# make cleaning fee into a numeric variable
+listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee)) 
+
+# make extra people a numeric variable
+listings$extra_people = as.numeric(gsub("[\\$,]", "", listings$extra_people)) 
+
+
+#Changes NA cleaning fee values to 0, because assuming that 0 is meant for NA
+listings <- listings %>%   
+  mutate(cleaning_fee = case_when(
+    is.na(cleaning_fee) ~ 0, 
+    TRUE ~ cleaning_fee
+  ))
+
+#create a list of property types and the count
+listings%>% 
+  group_by(property_type)%>%
+  summarise(count= n())%>%
+  arrange(desc(count))
+
+#Taking top 4 property_type and creating a new column and assigning property_type in groups
+listings <- listings %>%
+  mutate(prop_type_simplified = case_when(
+    property_type %in% c("Apartment","Condominium", "House","Townhouse") ~ property_type, 
+    TRUE ~ "Other"
+  ))
+
+#check if all the variables are in the correct type
+skim(listings) 
+
+```
+```{r filtering, echo=FALSE}
+
+#displaying table with the count in descending order for the minimum nights
+listings%>%     
+  group_by(minimum_nights)%>%
+  summarise(count= n())%>%
+  arrange(desc(count))
+
+#Filtering the airbnb data so that it only includes observations less than or equal to 4
+listings<-listings%>%
+  filter(minimum_nights <= 4)
+
+```
+> The most common values are 2,3,1,4,5.That means renting for a five days or less.
+We see that there is a dramatic decrease of the number of listing from 5 days and above and this may be due to the fact that people staying for lomger periods are not here for travel purposes but for other reasons such as work, living etc.
+
+
+```{r echo=FALSE}
+=======
 
 # make cleaning fee into a numeric variable
 listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee)) 
@@ -109,6 +161,7 @@ We see that people
 
 ```{r echo=FALSE}
 
+>>>>>>> 76f6fd0eeeaed16b6c1052aac00e857f3a7515e5
 listings %>%
   count(property_type, prop_type_simplified) %>%
   arrange(desc(n)) 
@@ -116,8 +169,13 @@ listings %>%
 
 
 
+<<<<<<< HEAD
+```{r, echo=FALSE}
+=======
 ```{r}
+>>>>>>> 76f6fd0eeeaed16b6c1052aac00e857f3a7515e5
 library(corrplot)
+
 leaflet(data = filter(listings, minimum_nights <= 4)) %>% 
   addProviderTiles("OpenStreetMap.Mapnik") %>% 
   addCircleMarkers(lng = ~longitude, 
@@ -138,6 +196,21 @@ eda.cor
 ```
 # REGRESSION
 
+<<<<<<< HEAD
+```{r, echo=FALSE}
+
+listings_numeric<- listings %>%
+  select(price, accommodates, beds, guests_included, review_scores_rating, number_of_reviews,  bedrooms,  bathrooms,  cleaning_fee) 
+
+listings_categorical<- listings %>%
+  select(price, neighbourhood_cleansed, room_type,  room_type,  property_type,  host_is_superhost)
+
+
+
+
+
+```
+=======
 ## First questions
 
 ```{r}
@@ -325,3 +398,4 @@ model3 %>% glance()
 ```
 
 
+>>>>>>> 76f6fd0eeeaed16b6c1052aac00e857f3a7515e5
