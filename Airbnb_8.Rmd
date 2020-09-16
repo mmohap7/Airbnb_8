@@ -252,8 +252,10 @@ model1<-lm(price_4_nights_log ~
               review_scores_rating +
              NULL,
             data = listings_log)
-model1 %>% tidy(conf.int=TRUE)
-model1 %>% glance()
+model1 %>%
+  tidy(conf.int=TRUE)
+model1 %>%
+  glance()
 
 # check residuals
 autoplot(model1)
@@ -312,8 +314,10 @@ model3a<-lm(price_4_nights_log ~
              accommodates +
              NULL, 
             data = listings_log)
-model3a %>% tidy(conf.int=TRUE)
-model3a %>% glance()
+model3a %>% 
+  tidy(conf.int=TRUE)
+model3a %>%
+  glance()
 
 # test VIF
 car::vif(model3a)
@@ -339,8 +343,10 @@ model3<-lm(price_4_nights_log ~
              bedrooms +
              accommodates, 
             data = listings_log)
-model3 %>% tidy(conf.int=TRUE)
-model3 %>% glance()
+model3 %>% 
+  tidy(conf.int=TRUE)
+model3 %>% 
+  glance()
 
 # test VIF
 car::vif(model3)
@@ -626,12 +632,16 @@ model_predictions %>%
 
 ```
 
+> As the price distribution is **right skewed**, choosing mean as measure to predict the final price wouldn't be economical so we've decided to use the median because it fits our budget.
 
 ```{r}
 # locate the median value property
-listings_predict %>%
-  filter(price_final == 1956)
+predicted_value<-listings_predict %>%
+  filter(price_final == median(price_final))
+predicted_value
+
 ```
+
 
 
 To DO
