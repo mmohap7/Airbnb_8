@@ -632,11 +632,12 @@ We will predict the total cost to stay at this AirBnB for 4 nights, including th
 ```{r predict-price, warning=FALSE}
 # filter our the data by room_type, nr of reviews and rating
 listings_predict <- listings_log %>% 
-  mutate(price_final = 10^(price_4_nights_log)) %>%
+  # mutate(price_final = 10^(price_4_nights_log)) %>%
   filter(room_type == "Private room",
          number_of_reviews >= 10,
-         review_scores_rating >= 90,
-         prop_type_simplified %in% c("Apartment", "Condominium", "House")) # there are no values for Townhouse or Other after filtering for our conditions, so we exclude the from the dataset
+         review_scores_rating >= 90) 
+
+# there are no values for Townhouse or Other after filtering for our conditions, so we exclude the from the dataset
 
 # When we plug this multi-row data frame into predict(), it'll generate a
 # prediction for each row
@@ -662,7 +663,7 @@ ggplot(model_predictions, aes(x = 10^(.fitted))) +
   facet_wrap(~neighbourhood_simplified) +
   theme_bw()
 
-# facet by prop_type_simplified
+# facet by prop_type_simplified -> still change order for proptype
 ggplot(model_predictions, aes(x = 10^(.fitted))) +
   geom_density() +
   labs(y = "Predicted leave share",
@@ -670,7 +671,7 @@ ggplot(model_predictions, aes(x = 10^(.fitted))) +
   facet_wrap(~prop_type_simplified) +
   theme_bw()
 
-# facet by neighbourhood & prop_type_simplified
+# facet by neighbourhood & prop_type_simplified -> still change order for proptype
 ggplot(model_predictions, aes(x = 10^(.fitted))) +
   geom_density() +
   labs(y = "Predicted leave share",
@@ -679,10 +680,36 @@ ggplot(model_predictions, aes(x = 10^(.fitted))) +
   theme_bw()
 
 ```
+```{r}
+# Splitting data in training and testing sets
+# library(rsample)
+# set.seed(1234)  # for reproducibility, and to always get the same split, set the random seed first
+# 
+# train_test_split <- initial_split(listings_log, prop = 0.75)
+# listings_train <- training(train_test_split)
+# listings_test <- testing(train_test_split)
+# 
+# rmse_train <- listings_train %>%
+#   mutate(predictions = predict(final_model, .)) %>%
+#   summarise(sqrt(sum(predictions - price_4_nights_log)**2/n())) %>% 
+#   pull()
+# rmse_train
+# # [1] 2.3212
+# 
+# rmse_test <- listings_test %>%
+#   mutate(predictions = predict(final_model, .)) %>%
+#   summarise(sqrt(sum(predictions - price_4_nights_log)**2/n())) %>% 
+#   pull()
+# rmse_test
+# # [1] 4.0204
+```
+
+
 
 ```{r}
 # find mean and median of the fitted prices
 model_predictions %>%
+  mutate(price_final = 10^(price_4_nights_log)) %>%
   summarize(mean_price = mean(price_final), median_price = median(price_final))
 
 ```
@@ -692,11 +719,18 @@ model_predictions %>%
 ```{r}
 # locate the median value property
 predicted_value <- listings_predict %>%
+  mutate(price_final = 10^(price_4_nights_log)) %>%
   filter(price_final == median(price_final))
-predicted_value
 
+predicted_value
 ```
 
+```{r}
+
+# predict for differnt nghds cuy they are sign
+# final_listing <- predicted_value %>%
+  
+```
 
 
 To DO
