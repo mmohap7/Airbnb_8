@@ -203,7 +203,7 @@ listings_categorical<- listings %>%
 ```
 
 
-## First questions
+## Basic explanatory variables  
 
 ```{r}
 # already included above, can be deleted
@@ -276,13 +276,15 @@ max_p4n
 
 ```
 
-Answer: we should use variable log(price_4_nights). Looking at the desity plots of
+Answer: we should use variable log(price_4_nights). Looking at the density plots of
 price_4_nights and log(price_4_nights), we can see clearly that log(price_4_nights) is more close to a normal distribution, while most values in price_4_nights are cramped within a very small range(what function is it called?????)
 
 
 ### Model 1
-```{r}
 
+Fitting a regression model called model1 with the following explanatory variables: prop_type_simplified, number_of_reviews, and review_scores_rating
+
+```{r model1}
 # create a new dataset with the new variable of log(price_4_nights)
 listings_log <- listings_new %>%
   mutate(price_4_nights_log = log10(price_4_nights)) 
@@ -297,17 +299,25 @@ model1<-lm(price_4_nights_log ~
             data = listings_log)
 model1 %>% tidy(conf.int=TRUE)
 model1 %>% glance()
-car::vif(model1)
+
+# check residuals
+autoplot(model1)
 
 ```
 Interpret the coefficient review_scores_rating in terms of price_4_nights:
-for every increase in rating by 1 point, the price goes up by 0.0023$ ???
+for every increase in rating by 1 point, the price goes up by 0.0023$ ??? -> check with log transformation
 
 Interpret the coefficient of prop_type_simplified in terms of price_4_nights:
 
+Model 1: 8%
+
+
 ### Model 2
-```{r}
-# create model2 by adding bathrooms, bedrooms, beds, accomodates to model 1
+
+We want to determine if room_type is a significant predictor of the cost for 4 nights, given everything else in the model.
+
+```{r model2}
+# create model2 by adding room_type to model1
 model2<-lm(price_4_nights_log ~
              prop_type_simplified +
              number_of_reviews +
@@ -318,21 +328,25 @@ model2<-lm(price_4_nights_log ~
 model2 %>% tidy(conf.int=TRUE)
 model2 %>% glance()
 
-car::vif(model2)
+# check residuals
+autoplot(model2)
 
 ```
-
 Interpret if if room_type is a significant predictor 
 It is 
 
 Model 2: 24% 
 
 
-## Additional explanatory variables 
+## Exploring additional explanatory variables 
+
 ### Model 3
-```{r}
-# create model3 by adding bathrooms, bedrooms, beds, accommodates to model 2 
-model3<-lm(price_4_nights_log ~
+
+Are the number of bathrooms, bedrooms, beds, or size of the house (accomodates) significant predictors of price_4_nights?
+
+```{r model3a}
+# create model3a by adding bathrooms, bedrooms, beds, accommodates to model2 
+model3a<-lm(price_4_nights_log ~
             prop_type_simplified +
              number_of_reviews +
              review_scores_rating +
@@ -343,84 +357,147 @@ model3<-lm(price_4_nights_log ~
              accommodates +
              NULL, 
             data = listings_log)
+model3a %>% tidy(conf.int=TRUE)
+model3a %>% glance()
+
+# test VIF
+car::vif(model3a)
+
+# check residuals
+autoplot(model3a)
+
+```
+
+The number of bathrooms, bedrooms, beds, and size of the house (accommodates) are all significant predictors of price_4_nights. However, there might be a problem with multi-collinearity since intuitively bathrooms, bedrooms and beds should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceptable range.
+# beds is also not signifiant? -> check this
+
+However, the prop_type becomes not a significant predictor anymore, thus we will include it from the following analyses:
+
+```{r model3}
+# create model3 by removing prop_type from model3a 
+model3<-lm(price_4_nights_log ~
+            # prop_type_simplified +
+             number_of_reviews +
+             review_scores_rating +
+             room_type + 
+             bathrooms +
+             bedrooms +
+             # beds + 
+             accommodates +
+             NULL, 
+            data = listings_log)
 model3 %>% tidy(conf.int=TRUE)
 model3 %>% glance()
 
 # test VIF
 car::vif(model3)
 
+# check residuals
+autoplot(model3)
+
 ```
 
-The number of bathrooms, bedrooms, beds, and size of the house (accommodates) are all significant predictors of price_4_nights. However, there might be a problem with multi-collinearity since intuitively bathrooms, bedrooms and beds should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceptable range.
-
-Model 3: 41%
+Model 3: 40%
 
 
 ### Model 4
 
 Do superhosts command a pricing premium, after controlling for other variables?
-```{r}
-# delete this?
+
+```{r model4}
+# delete this: 
 # typeof(listings_log$host_is_superhost)
 # 
 # listings_log<-listings_log %>%
 #   mutate(superhost = ifelse(host_is_superhost == TRUE, 1,0))
 
 
-# create model4 by adding host_is_superhost to model 3
+# create model4 by adding host_is_superhost to model3
 model4<-lm(price_4_nights_log ~
-            prop_type_simplified +
+            # prop_type_simplified +
              number_of_reviews +
              review_scores_rating +
              room_type + 
              bathrooms +
              bedrooms +
-             beds +
+             # beds +
              accommodates +
-             superhost +
+             host_is_superhost +
              NULL,
             data = listings_log)
 model4 %>% tidy(conf.int=TRUE)
 model4 %>% glance()
 
+# test VIF
 car::vif(model4)
 
-```
-Since the p-value for the estimate of the superhost coefficient is not significant, it seems that superhost do not command a price premium from their guests in Copenhagen. 
+# check residuals
+autoplot(model4)
 
+```
+Since the p-value for the estimate of the superhost coefficient is not significant, it seems that superhosts do not command a price premium from their guests in Copenhagen. 
+
+Model 4: 40% -> decrease, do not include superhost in next models 
 
 
 ### Model 5
 
 Most owners advertise the exact location of their listing (is_location_exact == TRUE), while a non-trivial proportion don’t. After controlling for other variables, is a listing’s exact location a significant predictor of price_4_nights?
 
-```{r}
-# create model5 with adding is_location_exact == TRUE
+```{r model5}
+# create model5 by adding is_location_exact == TRUE to model3
 model5<-lm(price_4_nights_log ~
-            prop_type_simplified +
+            # prop_type_simplified +
              number_of_reviews +
              review_scores_rating +
              room_type +
              bathrooms +
              bedrooms +
-             beds +
+             # beds +
              accommodates +
-             superhost +
              is_location_exact +
              NULL,
              data = listings_log)
 model5 %>% tidy(conf.int=TRUE)
 model5 %>% glance()
 
+# test VIF
+car::vif(model5)
+
+# check residuals
+autoplot(model5)
+
 ```
+A listing’s exact location is not a significant predictor of price_4_nights, thus we will not include it in the following models 
 
 
-For all cities, there are 3 variables that relate to neighbourhoods: neighbourhood, neighbourhood_cleansed, and neighbourhood_group_cleansed. There are typically more than 20 neighbourhoods in each city, and it wouldn’t make sense to include them all in your model. Use your city knowledge, or ask someone with city knowledge, and see whether you can group neighbourhoods together so the majority of listings falls in fewer (5-6 max) geographical areas. You would thus need to create a new categorical variabale neighbourhood_simplified and determine whether location is a predictor of price_4_nights
-```{r}
+### Model 6
 
-# create variable neighbourhood_simplified
+In order to reduce the number of neighbourhoods for our analysis we cluster the different neighbourhoods into groups, based on our experience, talking to locals, and research.
 
-# create model5 by adding neighbourhood_simplified
+The city of Copenhagen has 10 official administrative districts. Additionally, there is Frederiksberg, which is an independent municipality and, thus, separate from the Copenhagen Municipality, however, it is still part of Copenhagen city. 
+
+Indre By is the city center of Copenhagen and will remain its own cluster "Center".
+
+All the residential neighbourhoods surrounding the city center are commonly grouped together, and since they all end in -bro, often referred to as -bro districts (Brokvaterer in Danish). Frederiksberg is often also included in the -bro districts. Hence, we will cluster these 4 Brokvaterer districts into one group of Brokvarterer 
+
+Additionally, the two Amager districts (Vest and Ost) are grouped together.
+
+In the West, Valby, Vanlose and Brønshøj-Husum are summarized.
+
+Lastly, Bispebjerg, often referred to as Nordvest, which is more of a residential neighbourhood, is its own cluster
+```{r model6}
+# create variable neighbourhood_simplified with 5 categories 
+listings_log <- listings_log %>%
+  mutate(neighbourhood_simplified = case_when(
+    neighbourhood_cleansed %in% c("Indre By") ~ "Center",
+    neighbourhood_cleansed %in% c("Frederiksberg","Nrrebro", "sterbro","Vesterbro-Kongens Enghave") ~ "Brokvarterer", 
+    neighbourhood_cleansed %in% c("Amager st","Amager Vest") ~ "Amager",
+    neighbourhood_cleansed %in% c("Brnshj-Husum","Valby", "Vanlose") ~ "West",
+    TRUE ~ "Nordvest"
+  ))
+
+# create model6 by adding neighbourhood_simplified to model3
 model6<-lm(price_4_nights_log ~
             prop_type_simplified +
              number_of_reviews +
@@ -428,41 +505,113 @@ model6<-lm(price_4_nights_log ~
              room_type +
              bathrooms +
              bedrooms +
-             beds +
+             # beds +
              accommodates +
-             superhost +
-             is_location_exact +
-             #neighbourhood_simplified+
+             neighbourhood_simplified +
              NULL,
              data = listings_log)
 model6 %>% tidy(conf.int=TRUE)
 model6 %>% glance()
-```
 
+# test VIF
+car::vif(model6)
+
+# check residuals
+autoplot(model6)
+
+```
+One can see that the neighbourhood of an apartment is an predictor of the price for 4 nights in Copenhagen.
+
+Additionally, property_type became significant again in this model, so it will be included again in the following models. 
+
+Model 6: 50%
+
+
+### Model 7
 
 What is the effect of cancellation_policy on price_4_nights, after we control for other variables?
-```{r}
-
-# create model5 by adding cancellation_policy
-model6<-lm(price_4_nights_log ~
+```{r model7}
+# create model7 by adding cancellation_policy to model6
+model7<-lm(price_4_nights_log ~
             prop_type_simplified +
              number_of_reviews +
              review_scores_rating +
              room_type +
              bathrooms +
              bedrooms +
-             beds +
+             # beds +
              accommodates +
-             superhost +
-             is_location_exact +
-             #neighbourhood_simplified +
-             #cancellation_policy +
+             neighbourhood_simplified +
+             cancellation_policy +
              NULL,
              data = listings_log)
-model6 %>% tidy(conf.int=TRUE)
-model6 %>% glance()
+model7 %>% tidy(conf.int=TRUE)
+model7 %>% glance()
+
+# test VIF
+car::vif(model7)
+
+# check residuals
+autoplot(model7)
+
+```
+The cancellation policy is a significant predictor on price, with a flexible policy commanding the lowest price and with a strict policy commanding the highest price. This is surprising since usually hosts should be rewarded for the risk that they are taking with a flexibly cancellation policy. On the flipside, usually expensive and nice places have a stricter cancellation policy since they cannot afford to not have anyone live in their AirBnB. Thus, in the end the cancellation policy might rather be a consequence of the price and not a predictor of it. 
+
+
+
+# PREDICTION
+
+## Selecting the best model 
+
+After creating all these models, we now find to find our best model, our final model for predictions.
+
+```{r hux-copenhagen, echo=FALSE, warning=FALSE, message=FALSE, results="asis"}
+# compare all models next to each other
+huxreg(model1, model2, model3, model4, model5, model6, model7,
+       statistics = c('#observations' = 'nobs', 
+                      'R squared' = 'r.squared', 
+                      'Adj. R Squared' = 'adj.r.squared', 
+                      'Residual SE' = 'sigma'), 
+       bold_signif = 0.05, 
+       stars = NULL
+) %>% 
+  set_caption('Comparison of models')
 ```
 
+Model 7 is the best model with the highest R2 so this will be the final model.
 
 
->>>>>>> 76f6fd0eeeaed16b6c1052aac00e857f3a7515e5
+## Final model 
+```{r final model}
+final_model <- lm(price_4_nights_log ~
+            prop_type_simplified +
+             number_of_reviews +
+             review_scores_rating +
+             room_type +
+             bathrooms +
+             bedrooms +
+             # beds +
+             accommodates +
+             neighbourhood_simplified +
+             cancellation_policy +
+             NULL,
+             data = listings_log)
+mosaic::msummary(final_model)
+
+get_regression_table(final_model)
+get_regression_summaries(final_model)
+vif(final_model)
+```
+
+## Prediction
+
+We are planning to visit Copenhagen, and  want to stay in an Airbnb. We would like to look at Airbnbs that are apartment with a private room, have at least 10 reviews, and an average rating of at least 90. 
+
+We will predict the total cost to stay at this Airbnb for 4 nights, include the appropriate 95% interval with the prediction. (Report the point prediction and interval in terms of price_4_nights)
+
+```{r predict-price, warning=FALSE}
+
+
+```
+if you used a log(price_4_nights) model, make sure you anti-log to convert the value in $
+
