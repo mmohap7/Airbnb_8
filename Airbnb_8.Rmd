@@ -500,6 +500,7 @@ One can see that the neighbourhood of an apartment is an predictor of the price 
 
 What is the effect of cancellation_policy on price_4_nights, after we control for other variables?
 ```{r model7}
+
 # create model7 by adding cancellation_policy to model6
 model7<-lm(price_4_nights_log ~
             prop_type_simplified +
