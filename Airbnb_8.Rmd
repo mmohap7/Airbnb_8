@@ -195,14 +195,14 @@ ggpairs(listings_matrix, columns = 1:4)
 
 ```{r}
 # remove variables that will not be needed 
-listings_clean <- listings %>%
-  select(id, price, guests_included, cleaning_fee, extra_people, prop_type_simplified, number_of_reviews, review_scores_ratings, room_type, )
+# listings_clean <- listings %>%
+#   select(id, price, guests_included, cleaning_fee, extra_people, prop_type_simplified, number_of_reviews, review_scores_ratings, room_type, )
 ```
 
 
 ```{r}
 # create new variable for 4 nights using price, guests_included, cleaning_fee and extra_people
-listings_new <- listings_clean %>%
+listings_new <- listings_filtered_4nights %>%
   mutate(price_4_nights = 
            ifelse(guests_included <= 1,
                   (price + extra_people) * 4 + cleaning_fee,
@@ -264,7 +264,7 @@ for every increase in rating by 1 point, the price goes up by 0.0023$ ??? -> che
 
 Interpret the coefficient of prop_type_simplified in terms of price_4_nights:
 
-#### Model 1: 8%
+#### Model 1: 4%
 
 
 ### Model 2
@@ -331,13 +331,13 @@ However, the prop_type becomes not a significant predictor anymore, thus we will
 ```{r model3}
 # create model3 by removing prop_type from model3a 
 model3<-lm(price_4_nights_log ~
+             prop_type_simplified +
              number_of_reviews +
              review_scores_rating +
              room_type + 
              bathrooms +
              bedrooms +
-             accommodates +
-             NULL, 
+             accommodates, 
             data = listings_log)
 model3 %>% tidy(conf.int=TRUE)
 model3 %>% glance()
@@ -350,7 +350,7 @@ autoplot(model3)
 
 ```
 
-Model 3: 40%
+Model 3: 41%
 
 
 ### Model 4
@@ -360,14 +360,14 @@ Do superhosts command a pricing premium, after controlling for other variables?
 ```{r model4}
 # create model4 by adding host_is_superhost to model3
 model4<-lm(price_4_nights_log ~
+             prop_type_simplified +
              number_of_reviews +
              review_scores_rating +
              room_type + 
              bathrooms +
              bedrooms +
              accommodates +
-             host_is_superhost +
-             NULL,
+             host_is_superhost,
             data = listings_log)
 model4 %>% tidy(conf.int=TRUE)
 model4 %>% glance()
@@ -379,10 +379,33 @@ car::vif(model4)
 autoplot(model4)
 
 ```
-Since the p-value for the estimate of the superhost coefficient is not significant (with a p-value of 0.36 and a t-statistic of 0.9), it seems that superhosts do not command a price premium from their guests in Copenhagen. 
+Since the p-value for the estimate of the superhost coefficient is  significant (with a p-value of 0.36 and a t-statistic of 0.9), it seems that superhosts do command a price premium from their guests in Copenhagen. -> interpret coefficient 
 
-#### Model 4: 40% 
--> decrease, do not include superhost in next models 
+```{r}
+# create model4b by adding host_is_superhost to model4 and create an interaction variable 
+model4b<-lm(price_4_nights_log ~
+              prop_type_simplified +
+             number_of_reviews +
+             review_scores_rating +
+             room_type + 
+             bathrooms +
+             bedrooms +
+             accommodates +
+             host_is_superhost*review_scores_rating,
+            data = listings_log)
+model4b %>% tidy(conf.int=TRUE)
+model4b %>% glance()
+
+# test VIF
+car::vif(model4b)
+
+# check residuals
+autoplot(model4b)
+```
+Interaction variable is not significant, do not include.
+
+
+#### Model 4: 41% 
 
 
 ### Model 5
@@ -392,14 +415,14 @@ Most owners advertise the exact location of their listing (is_location_exact == 
 ```{r model5}
 # create model5 by adding is_location_exact == TRUE to model3
 model5<-lm(price_4_nights_log ~
+             prop_type_simplified +
              number_of_reviews +
              review_scores_rating +
              room_type +
              bathrooms +
              bedrooms +
              accommodates +
-             is_location_exact +
-             NULL,
+             is_location_exact,
              data = listings_log)
 model5 %>% tidy(conf.int=TRUE)
 model5 %>% glance()
@@ -448,7 +471,6 @@ model6<-lm(price_4_nights_log ~
              room_type +
              bathrooms +
              bedrooms +
-             # beds +
              accommodates +
              neighbourhood_simplified +
              NULL,
@@ -464,8 +486,6 @@ autoplot(model6)
 
 ```
 One can see that the neighbourhood of an apartment is an predictor of the price for 4 nights in Copenhagen.
-
-Additionally, property_type became significant again in this model, so it will be included again in the following models. 
 
 #### Model 6: 50%
 
@@ -484,8 +504,7 @@ model7<-lm(price_4_nights_log ~
              bedrooms +
              accommodates +
              neighbourhood_simplified +
-             cancellation_policy +
-             NULL,
+             cancellation_policy,
              data = listings_log)
 model7 %>% tidy(conf.int=TRUE)
 model7 %>% glance()
@@ -611,6 +630,11 @@ model_predictions %>%
 ```{r}
 # locate the median value property
 listings_predict %>%
-  filter(price_final == 1808)
+  filter(price_final == 1956)
 ```
 
+
+To DO
+- select relevant variables
+- interaction variables
+- write out explanations & analyses
