@@ -4,11 +4,9 @@ output: html_document
 ---
 
 ```{r load_packages, warning=FALSE, message=FALSE, echo=FALSE}
-
 list.of.packages <- c("ggplot2", "Rcpp", "tidyverse", "mosaic", "ggfortify", "moderndive", "janitor", "huxtable", "here", "broom", "skimr", "GGally", "car", "vroom")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
-
 library(tidyverse)
 library(mosaic)
 library(ggfortify)
@@ -80,10 +78,8 @@ neighbourhood*: three variables on a few major neighbourhoods in each city
 ```{r, exploration, echo=FALSE, cache=TRUE}
 # Looking at the raw values
 glimpse(listings) 
-
 #Computing summary statistics of the variables of interest, or finding NAs
 skim(listings) 
-
 ```
 
 
@@ -95,57 +91,44 @@ We tried first to convert some of the data from characters to numeric (i.e “$1
 ```{r cleaning data,echo=FALSE}
 # make price into a numeric variable
 listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) 
-
 # make cleaning fee into a numeric variable
 listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee)) 
-
 # make extra people a numeric variable
 listings$extra_people = as.numeric(gsub("[\\$,]", "", listings$extra_people)) 
-
-
 #Changes NA cleaning fee values to 0, because assuming that 0 is meant for NA
 listings <- listings %>%   
   mutate(cleaning_fee = case_when(
     is.na(cleaning_fee) ~ 0, 
     TRUE ~ cleaning_fee
   ))
-
 #create a list of property types and the count
 listings%>% 
   group_by(property_type)%>%
   summarise(count= n())%>%
   arrange(desc(count))
-
 #Taking top 4 property_type and creating a new column and assigning property_type in groups
 listings <- listings %>%
   mutate(prop_type_simplified = case_when(
     property_type %in% c("Apartment","Condominium", "House","Townhouse") ~ property_type, 
     TRUE ~ "Other"
   ))
-
 #check if all the variables are in the correct type
 skim(listings) 
-
 ```
 ```{r filtering, echo=FALSE}
-
 #displaying table with the count in descending order for the minimum nights
 listings%>%     
   group_by(minimum_nights)%>%
   summarise(count= n())%>%
   arrange(desc(count))
-
 #Filtering the airbnb data so that it only includes observations less than or equal to 4
 listings_filtered_4nights <- listings %>%
   filter(minimum_nights <= 4)
-
 ```
 > The most common values are 2,3,1,4,5.That means renting for a five days or less.
 We see that there is a dramatic decrease of the number of listing from 5 days and above and this may be due to the fact that people staying for lomger periods are not here for travel purposes but for other reasons such as work, living etc.
 
-
 ```{r, echo=FALSE}
-
 #Taking the filtered listings with a min of 4 nights and create a map of the apartments in Copenhagen
 listings_filtered_4nights %>% 
 leaflet() %>% 
@@ -160,15 +143,12 @@ leaflet() %>%
                    clusterOptions = markerClusterOptions()
                   )
   
-
 ```
 ```{r}
-
 #Calculated median price per night for each property type
 average_per_proptype <- listings_filtered_4nights %>% 
   group_by(prop_type_simplified) %>% 
   summarise(median_price = median(price))
-
 #Plotted a bar chart with median price per night for each property type
 average_per_proptype %>% 
   ggplot(aes(
@@ -182,12 +162,10 @@ average_per_proptype %>%
     y = "Median price per night",
     caption = "Source: AirBnB"
   )
-
 #Calculated median price per night for each room type
 median_per_roomtype <- listings_filtered_4nights %>% 
   group_by(room_type) %>% 
   summarise(median_price = median(price))
-
 #Price per night for each room type
 median_per_roomtype %>% 
   ggplot(aes(
@@ -201,16 +179,11 @@ median_per_roomtype %>%
     y = "Median price per night",
     caption = "Source: AirBnB"
   )
-
 listings<-listings%>%
   filter(minimum_nights == 4)
-
 listings_matrix<- listings %>%
   select(price, square_feet ,bedrooms, bathrooms) 
-
 ggpairs(listings_matrix, columns = 1:4)
-
-
 ```
 
 
@@ -232,28 +205,21 @@ listings_new <- listings_filtered_4nights %>%
            ifelse(guests_included <= 1,
                   (price + extra_people) * 4 + cleaning_fee,
                   (price) * 4 + cleaning_fee))
-
 ```
 
 ```{r,fig.width=20}
-
 # density plots for price_4_nights
 density.default(listings_new$price_4_nights)
-
 # calculate maximum (most often?) occurring price for 4 nights 
 max_p4n<-density(listings_new$price_4_nights)$x[which.max(density(listings_new$price_4_nights)$y)]
-
 max_p4n
-
 # plot density of price_4_nights
 ggplot(listings_new,aes(x=price_4_nights))+
   geom_density() +
   geom_vline(xintercept = density(listings_new$price_4_nights)$x[which.max(density(listings_new$price_4_nights)$y)]) # plot vertical line to show maximum value
-
 # plot density of log(price_4_nights)
 ggplot(listings_new,aes(x=log(price_4_nights)))+
   geom_density()
-
 ```
 
 Answer: we should use variable log(price_4_nights). Looking at the density plots of
@@ -269,7 +235,6 @@ Fitting a regression model called model1 with the following explanatory variable
 listings_log <- listings_new %>%
   mutate(price_4_nights_log = log10(price_4_nights)) 
   
-
 # create model1 of price_4_nights with explanatory variables prop_type_simplified, number_of_reviews and review_scores_ratings
 model1<-lm(price_4_nights_log ~
               prop_type_simplified +
@@ -281,10 +246,8 @@ model1 %>%
   tidy(conf.int=TRUE)
 model1 %>%
   glance()
-
 # check residuals
 autoplot(model1)
-
 ```
 Interpret the coefficient review_scores_rating in terms of price_4_nights:
 for every increase in rating by 1 point, the price goes up by 0.0023$ ??? -> check with log transformation
@@ -309,10 +272,8 @@ model2<-lm(price_4_nights_log ~
             data = listings_log)
 model2 %>% tidy(conf.int=TRUE)
 model2 %>% glance()
-
 # check residuals
 autoplot(model2)
-
 ```
 Interpret if if room_type is a significant predictor 
 It is 
@@ -343,13 +304,10 @@ model3a %>%
   tidy(conf.int=TRUE)
 model3a %>%
   glance()
-
 # test VIF
 car::vif(model3a)
-
 # check residuals
 autoplot(model3a)
-
 ```
 
 The number of bathrooms, bedrooms, beds, and size of the house (accommodates) are all significant predictors of price_4_nights. However, there might be a problem with multi-collinearity since intuitively bathrooms, bedrooms and beds should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceptable range.
@@ -372,13 +330,10 @@ model3 %>%
   tidy(conf.int=TRUE)
 model3 %>% 
   glance()
-
 # test VIF
 car::vif(model3)
-
 # check residuals
 autoplot(model3)
-
 ```
 
 Model 3: 41%
@@ -402,13 +357,10 @@ model4<-lm(price_4_nights_log ~
             data = listings_log)
 model4 %>% tidy(conf.int=TRUE)
 model4 %>% glance()
-
 # test VIF
 car::vif(model4)
-
 # check residuals
 autoplot(model4)
-
 ```
 Since the p-value for the estimate of the superhost coefficient is  significant (with a p-value of 0.36 and a t-statistic of 0.9), it seems that superhosts do command a price premium from their guests in Copenhagen. -> interpret coefficient 
 
@@ -426,10 +378,8 @@ model4b<-lm(price_4_nights_log ~
             data = listings_log)
 model4b %>% tidy(conf.int=TRUE)
 model4b %>% glance()
-
 # test VIF
 car::vif(model4b)
-
 # check residuals
 autoplot(model4b)
 ```
@@ -457,13 +407,10 @@ model5<-lm(price_4_nights_log ~
              data = listings_log)
 model5 %>% tidy(conf.int=TRUE)
 model5 %>% glance()
-
 # test VIF
 car::vif(model5)
-
 # check residuals
 autoplot(model5)
-
 ```
 A listing’s exact location is not a significant predictor of price_4_nights, thus we will not include it in the following models 
 
@@ -493,7 +440,6 @@ listings_log <- listings_log %>%
     neighbourhood_cleansed %in% c("Brnshj-Husum","Valby", "Vanlose") ~ "West",
     TRUE ~ "Nordvest"
   ))
-
 # create model6 by adding neighbourhood_simplified to model3
 model6<-lm(price_4_nights_log ~
             prop_type_simplified +
@@ -508,13 +454,10 @@ model6<-lm(price_4_nights_log ~
              data = listings_log)
 model6 %>% tidy(conf.int=TRUE)
 model6 %>% glance()
-
 # test VIF
 car::vif(model6)
-
 # check residuals
 autoplot(model6)
-
 ```
 One can see that the neighbourhood of an apartment is an predictor of the price for 4 nights in Copenhagen.
 
@@ -525,7 +468,6 @@ One can see that the neighbourhood of an apartment is an predictor of the price 
 
 What is the effect of cancellation_policy on price_4_nights, after we control for other variables?
 ```{r model7}
-
 # create model7 by adding cancellation_policy to model6
 model7<-lm(price_4_nights_log ~
             prop_type_simplified +
@@ -540,13 +482,10 @@ model7<-lm(price_4_nights_log ~
              data = listings_log)
 model7 %>% tidy(conf.int=TRUE)
 model7 %>% glance()
-
 # test VIF
 car::vif(model7)
-
 # check residuals
 autoplot(model7)
-
 ```
 The cancellation policy is a significant predictor on price, with a flexible policy commanding the lowest price and with a strict policy commanding the highest price. This is surprising since usually hosts should be rewarded for the risk that they are taking with a flexibly cancellation policy. On the flipside, usually expensive and nice places have a stricter cancellation policy since they cannot afford to not have anyone live in their AirBnB. Thus, in the end the cancellation policy might rather be a consequence of the price and not a predictor of it. 
 
@@ -589,7 +528,6 @@ final_model <- lm(price_4_nights_log ~
              NULL,
              data = listings_log)
 mosaic::msummary(final_model)
-
 get_regression_table(final_model)
 get_regression_summaries(final_model)
 vif(final_model)
@@ -609,23 +547,19 @@ listings_predict <- listings_log %>%
          number_of_reviews >= 10,
          review_scores_rating >= 90,
          prop_type_simplified %in% c("Apartment", "Condominium", "House")) # there are no values for Townhouse or Other after filtering for our conditions, so we exclude the from the dataset
-
 # When we plug this multi-row data frame into predict(), it'll generate a
 # prediction for each row
 predict(final_model, newdata = listings_predict, interval = "prediction")
-
 # We can also use broom::augment(). It's  essentially the same thing as predict(), 
 # but it adds the predictions and confidence intervals to the imaginary constituency 
 model_predictions <- broom::augment(final_model, 
                              newdata = listings_predict)
-
 # graph distribution of fitted values and converting the log values back to normal dollar prices 
 ggplot(model_predictions, aes(x = 10^(.fitted))) +
   geom_density() +
   labs(y = "Predicted leave share",
        x = "Proportion of constituency with a university degree") +
   theme_bw()
-
 # facet by neighbourhood
 ggplot(model_predictions, aes(x = 10^(.fitted))) +
   geom_density() +
@@ -633,7 +567,6 @@ ggplot(model_predictions, aes(x = 10^(.fitted))) +
        x = "Proportion of constituency with a university degree") +
   facet_wrap(~neighbourhood_simplified) +
   theme_bw()
-
 # facet by prop_type_simplified
 ggplot(model_predictions, aes(x = 10^(.fitted))) +
   geom_density() +
@@ -641,7 +574,6 @@ ggplot(model_predictions, aes(x = 10^(.fitted))) +
        x = "Proportion of constituency with a university degree") +
   facet_wrap(~prop_type_simplified) +
   theme_bw()
-
 # facet by neighbourhood & prop_type_simplified
 ggplot(model_predictions, aes(x = 10^(.fitted))) +
   geom_density() +
@@ -649,23 +581,19 @@ ggplot(model_predictions, aes(x = 10^(.fitted))) +
        x = "Proportion of constituency with a university degree") +
   facet_grid(neighbourhood_simplified~prop_type_simplified) +
   theme_bw()
-
 ```
 ```{r}
 # find mean and median of the fitted prices
 model_predictions %>%
   summarize(mean_price = mean(price_final), median_price = median(price_final))
-
 ```
 
 > As the price distribution is **right skewed**, choosing mean as measure to predict the final price wouldn't be economical so we've decided to use the median because it fits our budget.
-
 ```{r}
 # locate the median value property
 predicted_value<-listings_predict %>%
   filter(price_final == median(price_final))
 predicted_value
-
 ```
 
 
