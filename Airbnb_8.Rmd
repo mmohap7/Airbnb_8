@@ -192,7 +192,7 @@ ggpairs(listings_matrix, columns = 1:4)
 # REGRESSION
 
 ```{r, echo=FALSE}
-
+# do we still need this?
 listings_numeric<- listings %>%
   select(price, accommodates, beds, guests_included, review_scores_rating, number_of_reviews,  bedrooms,  bathrooms,  cleaning_fee) 
 
@@ -201,17 +201,19 @@ listings_categorical<- listings %>%
 
 
 ```
-=======
+
 
 ## First questions
 
 ```{r}
+# already included above, can be deleted
 
-listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) # make price into a numeric variable
-listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee))
-listings$extra_people = as.numeric(gsub("[\\$,]", "", listings$extra_people))
-listings$guests_included = as.numeric(gsub("[\\$,]", "", listings$guests_included))
+# listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) # make price into a numeric variable
+# listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee))
+# listings$extra_people = as.numeric(gsub("[\\$,]", "", listings$extra_people))
+# listings$guests_included = as.numeric(gsub("[\\$,]", "", listings$guests_included))
 
+# do we still need this?
 listings <- listings %>%
   mutate(cleaning_fee = case_when(
     is.na(cleaning_fee) ~ 0, 
@@ -244,7 +246,8 @@ listings_new <- listings %>%
            ifelse(guests_included <= 1,
                   (price + extra_people) * 4 + cleaning_fee,
                   (price) * 4 + cleaning_fee))
-  
+
+# delete?  
 #model_1<-lm(price_4_nights~cleaning_fee,data=listings_new)
 #model_1 %>% tidy(conf.int=TRUE)
 #model_1 %>% glance()
@@ -260,13 +263,13 @@ density.default(listings_new$price_4_nights)
 # plot density of price_4_nights
 ggplot(listings_new,aes(x=price_4_nights))+
   geom_density() +
-  geom_vline(xintercept = density(listings_new$price_4_nights)$x[which.max(density(listings_new$price_4_nights)$y)])
+  geom_vline(xintercept = density(listings_new$price_4_nights)$x[which.max(density(listings_new$price_4_nights)$y)]) # plot vertical line to show maximum value
 
 # plot density of log(price_4_nights)
 ggplot(listings_new,aes(x=log(price_4_nights)))+
   geom_density()
 
-# calculate maximum (most often?) occuring price 4 nights value is :
+# calculate maximum (most often?) occurring price for 4 nights 
 max_p4n<-density(listings_new$price_4_nights)$x[which.max(density(listings_new$price_4_nights)$y)]
 
 max_p4n
@@ -280,17 +283,17 @@ price_4_nights and log(price_4_nights), we can see clearly that log(price_4_nigh
 ### Model 1
 ```{r}
 
-# create the new variable of log(price_4_nights)
+# create a new dataset with the new variable of log(price_4_nights)
 listings_log <- listings_new %>%
   mutate(price_4_nights_log = log10(price_4_nights)) 
   
 
-# create  model1 of price_4_nights with review_scores_ratings
+# create model1 of price_4_nights with explanatory variables prop_type_simplified, number_of_reviews and review_scores_ratings
 model1<-lm(price_4_nights_log ~
               prop_type_simplified +
               number_of_reviews +
               review_scores_rating +
-             NULL, 
+             NULL,
             data = listings_log)
 model1 %>% tidy(conf.int=TRUE)
 model1 %>% glance()
@@ -304,7 +307,7 @@ Interpret the coefficient of prop_type_simplified in terms of price_4_nights:
 
 ### Model 2
 ```{r}
-# create model2 with adding bathrooms, bedrooms, beds, accomodates to model 1
+# create model2 by adding bathrooms, bedrooms, beds, accomodates to model 1
 model2<-lm(price_4_nights_log ~
              prop_type_simplified +
              number_of_reviews +
@@ -325,10 +328,10 @@ It is
 Model 2: 24% 
 
 
-# Additional questions
+## Additional explanatory variables 
 ### Model 3
 ```{r}
-# create model3 with adding bathrooms, bedrooms, beds, accommodates to model 3 -> test VIF
+# create model3 by adding bathrooms, bedrooms, beds, accommodates to model 2 
 model3<-lm(price_4_nights_log ~
             prop_type_simplified +
              number_of_reviews +
@@ -343,25 +346,28 @@ model3<-lm(price_4_nights_log ~
 model3 %>% tidy(conf.int=TRUE)
 model3 %>% glance()
 
+# test VIF
 car::vif(model3)
 
 ```
 
-The number of bathrooms, bedrooms, beds, and size of the house (accomodates) are all significant predictors of price_4_nights. However, there might be a problem with multi-collinearity since intuitively bathrooms, bedrooms and beds should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceotable range.
+The number of bathrooms, bedrooms, beds, and size of the house (accommodates) are all significant predictors of price_4_nights. However, there might be a problem with multi-collinearity since intuitively bathrooms, bedrooms and beds should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceptable range.
 
 Model 3: 41%
 
 
 ### Model 4
+
+Do superhosts command a pricing premium, after controlling for other variables?
 ```{r}
-#
-typeof(listings_log$host_is_superhost)
+# delete this?
+# typeof(listings_log$host_is_superhost)
+# 
+# listings_log<-listings_log %>%
+#   mutate(superhost = ifelse(host_is_superhost == TRUE, 1,0))
 
-listings_log<-listings_log %>%
-  mutate(superhost = ifelse(host_is_superhost == TRUE, 1,0))
 
-
-# create model4 with adding host_is_superhost
+# create model4 by adding host_is_superhost to model 3
 model4<-lm(price_4_nights_log ~
             prop_type_simplified +
              number_of_reviews +
@@ -380,10 +386,14 @@ model4 %>% glance()
 car::vif(model4)
 
 ```
+Since the p-value for the estimate of the superhost coefficient is not significant, it seems that superhost do not command a price premium from their guests in Copenhagen. 
+
+
+
+### Model 5
 
 Most owners advertise the exact location of their listing (is_location_exact == TRUE), while a non-trivial proportion don’t. After controlling for other variables, is a listing’s exact location a significant predictor of price_4_nights?
 
-### Model 5
 ```{r}
 # create model5 with adding is_location_exact == TRUE
 model5<-lm(price_4_nights_log ~
