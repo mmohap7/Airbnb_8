@@ -25,6 +25,37 @@ library(GGally)
 library(leaflet)
 ```
 
+#Introduction
+
+Copenhagen, the happiest city in the world, Who doesn't want to go there! Happiness comes at a price though, you'll need to find a place to stay. What better way to look for a place to stay than on AirBnB and us being students, want to go there when the prices are cheapest. This is where the MAM program from LBS is already paying itself off. To find out what variables (e.g. room type, property type) influence the price most and to predict when is best to go, we're running a regression analysis. So our dream holiday can become reality.
+
+The data we will be using for this comes directly from AirBnB. In this analysis we will only be using data on the city of Copenhagen. the data shows the listings as per June 26th 2020.
+
+This analysis is divided into 4 parts:
+
+1.    Executive summary
+1.    Exploratory data analysis
+1.    Regression analysis
+1.    Conclusion
+
+#Executive summary
+
+to be filled in after conclusion.
+
+#Exploratory data analysis
+To get an idea of the data structure, an exploratory data analysis is conducted. The first steps are to look at the raw values and to clean the data afterwards. This gives a foundation to use in summary statistics. Finally, visualisations will give an impression of any correlations in variables and will give an outlook on variables that stand out.
+
+##Looking at the raw values
+
+First of all, the data needs to be loaded. The clean_names() function is used to make the values consistent and neat, to help with the data wrangling.
+
+```{r cars, cache=TRUE}
+listings <- vroom("http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/listings.csv.gz") %>% 
+    #get the listings for Copenhagen
+    clean_names()  
+```
+
+Throughout the analysis the following variables will be of importance
 price = cost per night
 
 cleaning_fee: cleaning fee
@@ -46,14 +77,6 @@ longitude , latitude: geographical coordinates to help us locate the listing
 
 neighbourhood*: three variables on a few major neighbourhoods in each city
 
-```{r cars, cache=TRUE}
-listings <- vroom("http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/listings.csv.gz") %>% 
-    #get the listings for Copenhagen
-    clean_names()  
-```
-
-
-
 ```{r, exploration, echo=FALSE, cache=TRUE}
 # Looking at the raw values
 glimpse(listings) 
@@ -63,7 +86,9 @@ skim(listings)
 
 ```
 
-#EDA
+
+
+##Computing summary statistics of the variables of interest
 
 We tried first to convert some of the data from characters to numeric (i.e “$176.00”--. 176)
 
