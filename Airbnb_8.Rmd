@@ -32,6 +32,7 @@ library(GGally)
 library(leaflet)
 library(kableExtra)
 
+
 ```
 
 # Introduction
@@ -109,11 +110,10 @@ The next step is to check the data for the properties of the variables and if th
 
 # Look at the raw values
 glimpse(listings) %>%
-  kable()
+
 
 # Compute summary statistics of the variables of interest, or find NAs
 skim(listings) %>%
-  kable()
 
 ```
 
@@ -287,7 +287,8 @@ median_per_neighborhood %>%
   ggplot(aes(
     x = reorder(neighbourhood_cleansed, median_price),
     y = median_price
-  )) +
+  ),
+  color = "#FF5A5F") +
   geom_col() +
   labs(
     title = "Median price per night per neighborhood",
@@ -296,6 +297,7 @@ median_per_neighborhood %>%
     caption = "Source: Airbnb"
   ) +
   coord_flip() +
+  theme_classic() +
   NULL
 
 ```
@@ -367,7 +369,7 @@ Following from this, we wanted to know what influence rating has on the price. F
 
 #Plotted a density graph to display the relationship with price in being a superhost
 listings_clean %>%
-  ggplot(aes(
+ggplot(aes(
     x = log(price),
     #colour the graph by being a superhost or not and filtering out the NA values
     colour = !is.na(host_is_superhost)
@@ -375,13 +377,21 @@ listings_clean %>%
   geom_density() +
     labs(
       title = "Density plot for prices on whether superhost is true/false",
-      x = "price per night (log)",
-      y = "density",
+      x = "Price per night (log)",
+      y = "Density",
       caption = "Source: AirBnB"
-    ) +
-  NULL
+    ) + 
+        scale_fill_discrete(
+                          name = NULL, 
+                          labels = c("Non-superhost", "Superhost")
+                          ) +
+      theme_classic() +
+      NULL
+
+
 
 #Plotted a histogram to display the distribution of ratings and to show if this is affected by being a superhost
+
 listings_clean %>%
   #Filtered out the NA's in superhost
   filter(!is.na(host_is_superhost)) %>% 
@@ -394,9 +404,15 @@ listings_clean %>%
       labs(
       title = "Histogram for review score distribution with (non)superhosts",
       x = "Review scores",
-      y = "count",
+      y = "Count",
       caption = "Source: AirBnB"
     ) +
+  # change name of legend
+      # scale_fill_discrete(
+      #                     name = NULL, 
+      #                     labels = c("Non-superhost", "Superhost")
+      #                     ) +
+  #theme_classic() +
   NULL
 
 #plotted a scatter graph showing the relationship between review score and price
@@ -413,10 +429,10 @@ listings_clean %>%
       labs(
       title = "Scatter plot showing relationship between review scores and price",
       x = "Review scores",
-      y = "price per night (log)",
+      y = "Price per night (log)",
       caption = "Source: Airbnb"
     ) +
-  
+  theme_classic() +
   NULL
 
 ```
@@ -440,7 +456,6 @@ listings_clean %>%
 # REGRESSION
 
 ## Basic explanatory variables  
-
 
 Before we start with the regression modeling, we need to filter the data to represent 2 people staying for 4 nights, including the cleaning fee.
 ```{r 4 nights 2 guests}
@@ -471,11 +486,15 @@ ggplot(
   aes(x = price_4_nights)) +
   geom_density() +
   # Plot vertical line to show maximum value
-  geom_vline(xintercept =  max_p4n)  
+  geom_vline(xintercept =  max_p4n) +
+  theme_classic() +
+  NULL
 
 # Plot density of log(price_4_nights)
 ggplot(listings_new, aes(x = log(price_4_nights))) +
-  geom_density()
+  geom_density() +
+  theme_classic() +
+  NULL
 
 ```
 we should use variable log(price_4_nights). Looking at the density plots of
@@ -910,7 +929,8 @@ ggplot(model_predictions, aes(x = fitted_price_final)) +
   geom_density() +
   labs(y = "",
        x = "Price of an AirBnB in Copenhagen") +
-  theme_bw()
+  theme_classic() +
+  NULL
 
 # Facet by neighborhood
 ggplot(model_predictions, aes(x = fitted_price_final)) +
@@ -918,7 +938,8 @@ ggplot(model_predictions, aes(x = fitted_price_final)) +
   labs(y = "",
        x = "Price of an AirBnB in Copenhagen") +
   facet_wrap(~neighbourhood_simplified) +
-  theme_bw()
+  theme_classic() +
+  NULL
 
 # Facet by prop_type_simplified
 ggplot(model_predictions, aes(x = fitted_price_final)) +
@@ -926,10 +947,11 @@ ggplot(model_predictions, aes(x = fitted_price_final)) +
   labs(y = "",
        x = "Price of an AirBnB in Copenhagen") +
   facet_wrap(~prop_type_simplified) +
-  theme_bw()
+  theme_classic() +
+  NULL
 
 # Facet by neighborhood & prop_type_simplified
-ggplot(model_predictions, aes(x = fitted_price_final)) +
+ggplot(model_predictions, aes(x = fitted_price_final)) + 
   geom_density() +
   labs(y = "",
        x = "Price of an AirBnB in Copenhagen") +
@@ -937,7 +959,8 @@ ggplot(model_predictions, aes(x = fitted_price_final)) +
     neighbourhood_simplified ~ prop_type_simplified,
     scales = "free"
     ) +
-  theme_bw()
+  theme_classic() +
+  NULL
 
 
 ```
@@ -956,7 +979,6 @@ rmse_train <- listings_train %>%
   mutate(predictions = predict(final_model, .)) %>%
   summarise(sqrt(sum(predictions - price_4_nights_log,na.rm = TRUE)**2/n())) %>% 
    pull()
-
 
 rmse_train
 
