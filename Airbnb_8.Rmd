@@ -112,6 +112,7 @@ From this list can be concluded that there are 28,523 values for 106 variables. 
 
 ##Computing summary statistics of the variables of interest
 
+In this section we will clean the data and run summary statistics that will be visualised in the next section. First the values stored as characters are converted to numeric values and the $-sign removed.
 
 ```{r cleaning data stored as character}
 
@@ -130,7 +131,7 @@ Following this, the NA's in the cleaning_fee values will be converted to zero. A
 
 ```{r cleaning data by reducing the NA's}
 
-#Changes NA cleaning fee values to 0, assuming that 0 is meant for NA
+# Change NA cleaning fee values to 0, assuming that 0 is meant for NA
 listings <- listings %>%   
   mutate(cleaning_fee = case_when(
     is.na(cleaning_fee) ~ 0, 
@@ -171,13 +172,8 @@ listings %>%
   summarise(count= n()) %>%
   arrange(desc(count))
 
-#displaying table with the count in descending order for the minimum nights
-listings%>%     
-  group_by(minimum_nights)%>%
-  summarise(count= n())%>%
-  arrange(desc(count))
-
 ```
+
 In this summary it can be seen that after 5 minimum days the numbers of listing drop significantly.The majority of listings are within the 1 to 4 minimum days stay. Therefore this will give a good indication of the listings intended for short, holiday, stays. In the next section the data is filtered to only feature a minimum of 4 nights or less. Also, the variables that will be used in the analysis are selected, so to only have relevant variables left to make the analysis more concise and clear.
 
 ```{r filtering, echo=FALSE}
