@@ -680,13 +680,9 @@ model5<-lm(price_4_nights_log ~
              bathrooms +
              bedrooms +
              accommodates +
-<<<<<<< HEAD
              host_is_superhost +
              is_location_exact,
-=======
              is_location_exact+
-            host_is_superhost,
->>>>>>> aa696df9608b2d8737be224fefa7c7cede24c634
              data = listings_log
            )
 model5 %>% tidy(conf.int=TRUE)
