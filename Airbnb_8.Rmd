@@ -265,10 +265,8 @@ model1<-lm(price_4_nights_log ~
               review_scores_rating +
              NULL,
             data = listings_log)
-model1 %>%
-  tidy(conf.int=TRUE)
-model1 %>%
-  glance()
+model1 %>% tidy(conf.int=TRUE)
+model1 %>% glance()
 # check residuals
 autoplot(model1)
 ``` 
@@ -344,8 +342,6 @@ Interpretation of bathrooms, bedrooms, beds, and size of the house (accommodates
 > The number of bathrooms, bedrooms and size of the house (accommodates) are  significant predictors of log10(price_4_nights) and are all positively related with price_4_nights, while number of beds is not a significant predictor. Coefficients show that each additional bathroom is associated with 0.06 increase in log10(price_4_nights); each additional bedroom is associated with 0.05 increase in log10(price_4_nights).
 There might be a problem with multi-collinearity since intuitively the number of bathrooms and bedrooms should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceptable range.
 
-????????However, the prop_type becomes not a significant predictor anymore, thus we will include it from the following analyses:
-
 ```{r model3}
 # create model3 by removing prop_type from model3a 
 model3<-lm(price_4_nights_log ~
@@ -357,17 +353,15 @@ model3<-lm(price_4_nights_log ~
              bedrooms +
              accommodates, 
             data = listings_log)
-model3 %>% 
-  tidy(conf.int=TRUE)
-model3 %>% 
-  glance()
+model3 %>% tidy(conf.int=TRUE)
+model3 %>% glance()
 # test VIF
 car::vif(model3)
 # check residuals
 autoplot(model3)
 ```
 
-Model 3: 41%
+#### Model 3: 41%
 
 
 ### Model 4
@@ -429,7 +423,7 @@ Interaction variable host_is_superhost*review_scores_rating is not significant, 
 Most owners advertise the exact location of their listing (is_location_exact == TRUE), while a non-trivial proportion don’t. After controlling for other variables, is a listing’s exact location a significant predictor of price_4_nights?
 
 ```{r model5}
-# create model5 by adding is_location_exact == TRUE to model3
+# create model5 by adding is_location_exact == TRUE to model4
 model5<-lm(price_4_nights_log ~
              prop_type_simplified +
              number_of_reviews +
@@ -451,6 +445,8 @@ autoplot(model5)
 Interpretation of exact location variable:
 
 > A listing’s exact location variable has a p value of 0.34, and therefore is not a significant predictor of price_4_nights. Thus, we will not include it in the following models.
+
+#### Model 4: 41% 
 
 
 ### Model 6
@@ -502,7 +498,6 @@ Interpretation of neighbourhood predictor:
 
 > We can see that all the neighbourhood variables are significant predictors of the price for 4 nights in Copenhagen. Taking Amager as the base, Brokvarterer is asscociated with 0.03 more in log10(price_4_nights); Center is asscociated with 0.16 more in log10(price_4_nights); Nordvest is asscociated with 0.09 drop in log10(price_4_nights); West is asscociated with 0.09 drop in log10(price_4_nights).
 
-
 #### Model 6: 50%
 
 
@@ -534,6 +529,7 @@ Interpretation of cancellation policy predictor:
 
 > The cancellation policy is a significant predictor on price, with a flexible policy commanding the lowest price and with a strict policy commanding the highest price. This is surprising since usually hosts should be rewarded for the risk that they are taking with a flexible cancellation policy. On the other hand, usually expensive and nice places have a stricter cancellation policy since the cost of having the place empty for a night is relatively higher. Thus, in the end the cancellation policy might rather be a consequence of the price and not a predictor of it. 
 
+#### Model 6: 51%
 
 
 # PREDICTION
@@ -582,68 +578,88 @@ vif(final_model)
 
 We are planning to visit Copenhagen and want to stay in an Airbnb. We would like to look at Airbnbs that are apartments with a private room, have at least 10 reviews, and an average rating of at least 90. 
 
-We will predict the total cost to stay at this Airbnb for 4 nights, including the appropriate 95% interval with the prediction. (Report the point prediction and interval in terms of price_4_nights)
+We will predict the total cost to stay at this Airbnb for 4 nights, including the appropriate 95% interval with the prediction.
 
 ```{r predict-price, warning=FALSE}
 # filter our the data by room_type, nr of reviews and rating
-listings_predict <- listings_log %>% 
-  mutate(price_final = 10^(price_4_nights_log)) %>%
+listings_predict_log <- listings_log %>% 
   filter(room_type == "Private room",
          number_of_reviews >= 10,
-         review_scores_rating >= 90,
-         prop_type_simplified %in% c("Apartment", "Condominium", "House")) # there are no values for Townhouse or Other after filtering for our conditions, so we exclude the from the dataset
-# When we plug this multi-row data frame into predict(), it'll generate a
-# prediction for each row
-predict(final_model, newdata = listings_predict, interval = "prediction")
-# We can also use broom::augment(). It's  essentially the same thing as predict(), 
-# but it adds the predictions and confidence intervals to the imaginary constituency 
-model_predictions <- broom::augment(final_model, 
-                             newdata = listings_predict)
+         review_scores_rating >= 90) 
+
+listings_predict_log
+
+# # generate a prediction for each row
+# predict(final_model, newdata = listings_predict_log, interval = "prediction")
+# 
+# # generate a prediction for each row with broom 
+# model_predictions_log <- broom::augment(final_model, 
+#                              newdata = listings_predict_log)
+# 
+# 
+# 
+# model_predictions
+
+# augment the model
+model_final_augment <- augment(final_model)
+
+model_final_augment
+
+# convert prices back from log
+model_predictions <- model_final_augment %>%
+  mutate(fitted_price_final = 10^(.fitted))
+
+model_predictions
+```
+
+```{r graph-predictions, warning=FALSE}
 # graph distribution of fitted values and converting the log values back to normal dollar prices 
-ggplot(model_predictions, aes(x = 10^(.fitted))) +
+ggplot(model_predictions, aes(x = fitted_price_final)) +
   geom_density() +
-  labs(y = "Predicted leave share",
-       x = "Proportion of constituency with a university degree") +
+  labs(y = "",
+       x = "Price of an AirBnB in Copenhagen") +
   theme_bw()
 # facet by neighbourhood
-ggplot(model_predictions, aes(x = 10^(.fitted))) +
+ggplot(model_predictions, aes(x = fitted_price_final)) +
   geom_density() +
-  labs(y = "Predicted leave share",
-       x = "Proportion of constituency with a university degree") +
+  labs(y = "",
+       x = "Price of an AirBnB in Copenhagen") +
   facet_wrap(~neighbourhood_simplified) +
   theme_bw()
 # facet by prop_type_simplified
-ggplot(model_predictions, aes(x = 10^(.fitted))) +
+ggplot(model_predictions, aes(x = fitted_price_final)) +
   geom_density() +
-  labs(y = "Predicted leave share",
-       x = "Proportion of constituency with a university degree") +
+  labs(y = "",
+       x = "Price of an AirBnB in Copenhagen") +
   facet_wrap(~prop_type_simplified) +
   theme_bw()
 # facet by neighbourhood & prop_type_simplified
-ggplot(model_predictions, aes(x = 10^(.fitted))) +
+ggplot(model_predictions, aes(x = fitted_price_final)) +
   geom_density() +
-  labs(y = "Predicted leave share",
-       x = "Proportion of constituency with a university degree") +
+  labs(y = "",
+       x = "Price of an AirBnB in Copenhagen") +
   facet_grid(neighbourhood_simplified~prop_type_simplified) +
   theme_bw()
 ```
+
 ```{r}
 # find mean and median of the fitted prices
 model_predictions %>%
-  summarize(mean_price = mean(price_final), median_price = median(price_final))
+  summarize(mean_price = mean(fitted_price_final), median_price = median(fitted_price_final))
 ```
 
 > As the price distribution is **right skewed**, choosing mean as measure to predict the final price wouldn't be economical so we've decided to use the median because it fits our budget.
+
 ```{r}
 # locate the median value property
-predicted_value<-listings_predict %>%
-  filter(price_final == median(price_final))
+predicted_value<-listings_predict_log %>%
+  filter(fitted_price_final == median(fitted_price_final))
 predicted_value
 ```
 
 
 
 To DO
-- select relevant variables
-- interaction variables
-- write out explanations & analyses
+- write out explanations & analyses (e.g. for residual plots)
+- add titles to graphs
+
