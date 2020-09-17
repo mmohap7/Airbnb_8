@@ -100,11 +100,6 @@ glimpse(listings)
 # Compute summary statistics of the variables of interest, or find NAs
 skim(listings) 
 
-# Get an overview of the size of the data and the variables
-glimpse(listings) 
-
-# Create an overview of the variables and their distribution, while checking for any missing or NA values
-skim(listings)
 ```
 
 From this list can be concluded that there are 28,523 values for 106 variables. there are a couple of values that contain NA, 1 of them, cleaning_fee, stands out and is one of the variables that was flagged as important in this analysis. This will be addressed in the next section. Other variables that stand out are price, cleaning_fee and extra_people. these variables are stored as character values and need to have the $-sign removed to be stored as a numeric value. Since these variables will be used further in the analyis, this also will be resolved in the next section where we clean the data and run summary statistics.
@@ -413,7 +408,7 @@ From this we can conclude that being a superhost does have an influence on the p
 ###GGpairs
 
 To display a comprehensive overview of the correlation between variables and the price we plotted a GGpairs plot. Using all the selected variables.
-```{r ggpairs plot}
+```{r ggpairs plot, message = FALSE}
 
 # Display the correlation between four important variables
 
@@ -430,7 +425,7 @@ listings_clean %>%
 ## Basic explanatory variables  
 
 
-
+Before we start with the regression modeling, we need to filter the data to represent 2 people staying for 4 nights, including the cleaning fee.
 ```{r 4 nights 2 guests}
 
 # Create new variable for 4 nights using price, guests_included, cleaning_fee and extra_people
@@ -443,6 +438,7 @@ listings_new <- listings_clean %>%
 
 ```
 
+The following plots show the density for the total price for 4 nights wjth and without a log function.
 ```{r density plot price,fig.width=20}
 
 # Density plots for price_4_nights
@@ -465,11 +461,10 @@ ggplot(listings_new, aes(x = log(price_4_nights))) +
   geom_density()
 
 ```
-
-Answer: we should use variable log(price_4_nights). Looking at the density plots of
+we should use variable log(price_4_nights). Looking at the density plots of
 price_4_nights and log(price_4_nights), we can see clearly that log(price_4_nights) is more close to a normal distribution, while most values in price_4_nights are cramped within a very small range.
 
-###Model 1
+### Model 1
 
 Fitting a regression model called model1 with the following explanatory variables: prop_type_simplified, number_of_reviews, and review_scores_rating
 
@@ -494,8 +489,6 @@ model1 %>% glance()
 autoplot(model1)
 
 ``` 
-
-Interpretation of review_scores_rating predictor:
 
 Ratings (review_scores_rating) is a significant predictor. Controlling for other variables, every 1 point increase in rating is associated with $ 0.002 increase in log10(price_4_nights).
 
@@ -570,8 +563,6 @@ autoplot(model3a)
 
 ```
 
-Interpretation of bathrooms, bedrooms, beds, and size of the house (accommodates) predictors:
-
 The number of bathrooms, bedrooms and size of the house (accommodates) are  significant predictors of log10(price_4_nights) and are all positively related with price_4_nights, while number of beds is not a significant predictor. Coefficients show that each additional bathroom is associated with 0.06 increase in log10(price_4_nights); each additional bedroom is associated with 0.05 increase in log10(price_4_nights).
 There might be a problem with multi-collinearity since intuitively the number of bathrooms and bedrooms should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceptable range.
 
@@ -631,8 +622,6 @@ car::vif(model4)
 autoplot(model4)
 
 ```
-
-Interpretation of superhost predictor:
 
 Since the p-value for the estimate of the superhost coefficient is  significant (with a p-value of 0.36 and a t-statistic of 0.9), it seems that superhosts do command a price premium from their guests in Copenhagen. Compared to non-superhost, being a superhost is associated with 0.03 increase in log10(price_4_nights).
 
@@ -694,8 +683,6 @@ car::vif(model5)
 autoplot(model5)
 
 ```
-
-Interpretation of exact location variable:
 
 A listing’s exact location variable has a p value of 0.34, and therefore is not a significant predictor of price_4_nights. Thus, we will not include it in the following models.
 
@@ -796,12 +783,6 @@ autoplot(model7)
 
 ```
 
-The cancellation policy is a significant predictor on price, with a flexible policy commanding the lowest price and with a strict policy commanding the highest price. This is surprising since usually hosts should be rewarded for the risk that they are taking with a flexibly cancellation policy. On the flipside, usually expensive and nice places have a stricter cancellation policy since they cannot afford to not have anyone live in their AirBnB. Thus, in the end the cancellation policy might rather be a consequence of the price and not a predictor of it. 
-
-
-
-Interpretation of cancellation policy predictor:
-
 The cancellation policy is a significant predictor on price, with a flexible policy commanding the lowest price and with a strict policy commanding the highest price. This is surprising since usually hosts should be rewarded for the risk that they are taking with a flexible cancellation policy. On the other hand, usually expensive and nice places have a stricter cancellation policy since the cost of having the place empty for a night is relatively higher. Thus, in the end the cancellation policy might rather be a consequence of the price and not a predictor of it. 
 
 > Model 7: 51%
@@ -859,29 +840,26 @@ vif(final_model)
 
 ## Prediction
 
-We are planning to visit Copenhagen and want to stay in an Airbnb. We would like to look at Airbnbs that are apartments with a private room, have at least 10 reviews, and an average rating of at least 90. 
+We are planning to visit Copenhagen and want to stay in an AirBnB. We would like to look at AirBnB's that are apartments with a private room, have at least 10 reviews, and an average rating of at least 90. 
 
-We will predict the total cost to stay at this Airbnb for 4 nights, including the appropriate 95% interval with the prediction.
+We will predict the total cost to stay at this AirBnB for 4 nights, including the appropriate 95% interval with the prediction.
 
 ```{r predict-price, warning=FALSE}
 # Filter our the data by room_type, nr of reviews and rating
 listings_predict_log <- listings_log %>% 
   filter(room_type == "Private room",
          number_of_reviews >= 10,
-         review_scores_rating >= 90
+         review_scores_rating >= 90,
+         accommodates >= 2
          ) 
-
-listings_predict_log
 
 # Generate a prediction for each row
 model_predictions_log_CI <- predict(final_model, newdata = listings_predict_log, interval = "confidence")
-model_predictions_log_CI
 
 # Generate a prediction for each row with broom
 model_predictions_log <- broom::augment(final_model,
                              newdata = listings_predict_log, se_fit = TRUE)
 
-model_predictions_log
 
 # Convert prices back from log
 model_predictions <- model_predictions_log  %>%
@@ -891,7 +869,6 @@ model_predictions <- model_predictions_log  %>%
          upper_final = 10^(upper),
          lower_final = 10^(lower))
 
-model_predictions
 ```
 
 ```{r graph-predictions, warning=FALSE}
@@ -906,7 +883,7 @@ ggplot(model_predictions, aes(x = fitted_price_final)) +
        x = "Price of an AirBnB in Copenhagen") +
   theme_bw()
 
-# Facet by neighbourhood
+# Facet by neighborhood
 ggplot(model_predictions, aes(x = fitted_price_final)) +
   geom_density() +
   labs(y = "",
@@ -922,12 +899,15 @@ ggplot(model_predictions, aes(x = fitted_price_final)) +
   facet_wrap(~prop_type_simplified) +
   theme_bw()
 
-# Facet by neighbourhood & prop_type_simplified
+# Facet by neighborhood & prop_type_simplified
 ggplot(model_predictions, aes(x = fitted_price_final)) +
   geom_density() +
   labs(y = "",
        x = "Price of an AirBnB in Copenhagen") +
-  facet_grid(neighbourhood_simplified ~ prop_type_simplified) +
+  facet_grid(
+    neighbourhood_simplified ~ prop_type_simplified,
+    scales = "free"
+    ) +
   theme_bw()
 
 
@@ -960,7 +940,7 @@ rmse_test
 
 ```
 
-```{r}
+```{r printing the mean}
 
 # Find mean and median of the fitted prices
 model_predictions %>%
@@ -974,24 +954,15 @@ As the price distribution is **right skewed**, choosing mean as measure to predi
 
 ```{r}
 
-# Locate the median value property
+# locate the median value property
 predicted_value <- model_predictions %>%
-  filter(fitted_price_final == median(fitted_price_final, na.rm = TRUE))
+  filter(fitted_price_final <= median(fitted_price_final, na.rm = TRUE), 
+         fitted_price_final >= median(fitted_price_final, na.rm = TRUE))
 
-predicted_value
+predicted_value %>% 
+  select(listing_url, accommodates, price, cleaning_fee, extra_people, prop_type_simplified, room_type, review_scores_rating, bathrooms, bedrooms, beds, neighbourhood_cleansed, )
+
+# print the point estimates and their confidence intervals of these median properties 
+predicted_value[, 29:31] 
 
 ```
-
-print(predicted_value$lower_final) + print(predicted_value$fitted_price_final) + print(predicted_value$upper_final)
-
-
-predicted price: 1887.023 $
-confidence interval:	$ 1839.692 $ 1935.572
-
-
-
-To DO
-- select relevant variables
-- interaction variables
-- write out explanations & analyses (e.g. for residual plots)
-- add titles to graphs
