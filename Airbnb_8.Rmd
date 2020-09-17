@@ -61,7 +61,7 @@ Using AirBnB data for listings at the time of June 26th 2020, we predicted the c
 -   cancellation policy
 -   Superhost
 
-After running regression models with these variables we came to a model that had the most prediction power, model 7. With the specified criteria we made a prediction with 95% confidence that the cost for a median listing on Airbnb in Copenhagen is between 1,860.18 USD and 1,938.58 USD.
+After running regression models with these variables we came to a model that had the most prediction power, model 7. With the specified criteria we made a prediction with 95% confidence that the cost for a median listing on Airbnb in Copenhagen is between 1,860.18 DKK and 1,938.58 DKK.
              
 # Exploratory data analysis
 To get an idea of the data structure, an exploratory data analysis is conducted. The first steps are to look at the raw values and to clean the data afterwards. This gives a foundation to use in summary statistics. Finally, visualisations will give an impression of any correlations in variables and will give an outlook on variables that stand out.
@@ -974,32 +974,11 @@ model_predictions %>%
 
 As the price distribution is **right skewed**, choosing mean as measure to predict the final price wouldn't be economical so we've decided to use the median because it fits our budget.
 
-```{r}
-
-# locate the median value property and since there is an even number of observations, there are two median properties, which is why we add a small margin of error (0.1) to locate these properties 
+```{r printing predicted value}
 predicted_value <- model_predictions %>%
-  filter(fitted_price_final <= median(fitted_price_final, na.rm = TRUE)+0.1, 
-         fitted_price_final >= median(fitted_price_final, na.rm = TRUE)-0.1)
 
-predicted_value
-
-# print the point estimates and their confidence intervals of these median properties 
-predicted_value[, 29:31] 
-
-```
-
-print(predicted_value$lower_final) + print(predicted_value$fitted_price_final) + print(predicted_value$upper_final)
-
-=======
-# locate the median value property
-predicted_value <- model_predictions %>%
-<<<<<<< HEAD
   filter(fitted_price_final == median(fitted_price_final, na.rm = TRUE))
-=======
-  filter(fitted_price_final <= median(fitted_price_final, na.rm = TRUE), 
-         fitted_price_final >= median(fitted_price_final, na.rm = TRUE))
->>>>>>> 79403f8c9bb894d2e7edb776676b073e8dbf371f
->>>>>>> 827be2a759c9eff123198967d647c7155056b96f
+
 
 predicted_value %>% 
   select(listing_url, accommodates, price, cleaning_fee, extra_people, prop_type_simplified, room_type, review_scores_rating, bathrooms, bedrooms, beds, neighbourhood_cleansed, )
@@ -1010,4 +989,4 @@ predicted_value[, 29:31]
 ```
 
 # Conclusion
-To conclude, we can predict, with 95% confidence, that a median listing on AirBnB in Copenhagen, for 2 people and 4 nights, will cost between 1,860.18 USD and 1,938.58 USD.
+To conclude, we can predict, with 95% confidence, that a median listing on AirBnB in Copenhagen, for 2 people and 4 nights, will cost between 1,860.18 DKK and 1,938.58 DKK.
