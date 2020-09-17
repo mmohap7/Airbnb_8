@@ -689,17 +689,26 @@ listings_predict_log <- listings_log %>%
 listings_predict_log
 
 # generate a prediction for each row
-predict(final_model, newdata = listings_predict_log, interval = "prediction")
+model_predictions_log_CI <- predict(final_model, newdata = listings_predict_log, interval = "confidence")
+model_predictions_log_CI
 
 # generate a prediction for each row with broom
 model_predictions_log <- broom::augment(final_model,
-                             newdata = listings_predict_log)
+                             newdata = listings_predict_log, se_fit = TRUE)
 
 model_predictions_log
 
+# model_predictions_aug <- augment(final_model)
+# 
+# model_predictions_aug
+
 # convert prices back from log
-model_predictions <- model_predictions_log %>%
-  mutate(fitted_price_final = 10^(.fitted))
+model_predictions <- model_predictions_log  %>%
+  mutate(lower = .fitted - 1.96 * .se.fit, 
+         upper = .fitted + 1.96 * .se.fit) %>%
+  mutate(fitted_price_final = 10^(.fitted),
+         upper_final = 10^(upper),
+         lower_final = 10^(lower))
 
 model_predictions
 ```
@@ -754,12 +763,18 @@ predicted_value <- model_predictions %>%
   filter(fitted_price_final == median(fitted_price_final, na.rm=TRUE))
 predicted_value
 
+
+print(predicted_value$lower_final) + print(predicted_value$fitted_price_final) + print(predicted_value$upper_final)
+
 ```
+
+predicted price: 1887.023 $
+confidence interval:	$ 1839.692 $ 1935.572
+
 
 
 To DO
 - select relevant variables
 - interaction variables
-- write out explanations & analyses
 - write out explanations & analyses (e.g. for residual plots)
 - add titles to graphs
