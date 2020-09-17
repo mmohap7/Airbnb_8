@@ -221,19 +221,13 @@ skim(listings_clean)
 
 Now that the data is clean, a selection of useful data has been made, and filtered to only feature our criteria for a short stay holiday listing, visualisations of data can be made. This lays the foundation of any correlations and questions the regression model will have to explain and answer.
 
-
-<<<<<<< HEAD
 ###location
 
 In order to get an idea on the concentration of apartment listings in the area of Copenhagen, we plotted a map showing the number of flat available for rent for 4 nights or less. We used clusters instead of point to make the map more readable and to get a better idea of the number of listings in each area.
 
-```{r mapping clusters, echo=FALSE}
-#Taking the filtered listings with a min of 4 nights and create a map of the apartments in Copenhagen
-=======
-```{r, echo=FALSE}
+```{r mapping clusters}
 
 # Take the filtered listings with a min of 4 nights and create a map of the apartments in Copenhagen
->>>>>>> 2f2e5f3ce6557a22b1c52fdc30259191ec080f7f
 listings_filtered_4nights %>% 
   leaflet() %>% 
   addProviderTiles("OpenStreetMap.Mapnik") %>% 
@@ -308,22 +302,7 @@ The histogram showed that hotel rooms are generally more expensive than the othe
 
 ```{r median prices accommodation types}
 
-<<<<<<< HEAD
-#Calculated median price per night for each property type
-=======
-```{r}
-
-# Calculate median price per night for each property type
->>>>>>> 2f2e5f3ce6557a22b1c52fdc30259191ec080f7f
-average_per_proptype <- listings_filtered_4nights %>% 
-  group_by(prop_type_simplified) %>% 
-  summarise(median_price = median(price))
-
-<<<<<<< HEAD
-#Plotted a bar chart with median price per night for each property type
-=======
 # Plot a bar chart with median price per night for each property type
->>>>>>> 2f2e5f3ce6557a22b1c52fdc30259191ec080f7f
 average_per_proptype %>% 
   ggplot(aes(
     x = reorder(prop_type_simplified, desc(median_price)),
@@ -343,11 +322,7 @@ median_per_roomtype <- listings_filtered_4nights %>%
   group_by(room_type) %>% 
   summarise(median_price = median(price))
 
-<<<<<<< HEAD
-#Price per night for each room type
-=======
 # Price per night for each room type
->>>>>>> 2f2e5f3ce6557a22b1c52fdc30259191ec080f7f
 median_per_roomtype %>% 
   ggplot(aes(
     x = reorder(room_type, desc(median_price)),
@@ -359,21 +334,8 @@ median_per_roomtype %>%
     x = "",
     y = "Median price per night",
     caption = "Source: AirBnB"
-<<<<<<< HEAD
   ) +
   NULL
-=======
-  )
-
-# Display the correlation between four important variables
-listings<-listings %>%
-  filter(minimum_nights == 4)
-
-listings_matrix <- listings %>%
-  select(price, square_feet ,bedrooms, bathrooms)
-
-ggpairs(listings_matrix, columns = 1:4)
->>>>>>> 2f2e5f3ce6557a22b1c52fdc30259191ec080f7f
 
 ```
 
@@ -384,52 +346,74 @@ From this we can conclude that both room type and property type have an influenc
 
 Following from this, we wanted to know what influence rating has on the price. For this we used both data on the review scores and whether the listing is posted by a superhost.
 
-```{r}
-<<<<<<< HEAD
+```{r rating plots}
 
+#Plotted a density graph to display the relationship with price in being a superhost
 listings_clean %>%
   ggplot(aes(
     x = log(price),
+    #colour the graph by being a superhost or not and filtering out the NA values
     colour = !is.na(host_is_superhost)
   )) +
   geom_density() +
+    labs(
+      title = "Density plot for prices on whether superhost is true/false",
+      x = "price per night (log)",
+      y = "density",
+      caption = "Source: AirBnB"
+    ) +
   NULL
 
-
+#Plotted a histogram to display the distribution of ratings and to show if this is affected by being a superhost
 listings_clean %>%
+  #Filtered out the NA's in superhost
   filter(!is.na(host_is_superhost)) %>% 
   ggplot(aes(
     x = review_scores_rating,
     fill = host_is_superhost
   )) +
-  geom_histogram(binwidth = 5) +
+  # set the binwidth to 1 to match the scoring bins in the original data
+  geom_histogram(binwidth = 1) +
+      labs(
+      title = "Histogram for review score distribution with (non)superhosts",
+      x = "Review scores)",
+      y = "count",
+      caption = "Source: AirBnB"
+    ) +
   NULL
 
+#plotted a scatter graph showing the relationship between review score and price
+listings_clean %>%
+  ggplot(aes(
+    x = review_scores_rating,
+    y = price
+  )) +
+  geom_point() +
+  #Applied a logscale to make the relationship more visible
+  scale_y_log10() +
+  #Applied a linear line to display any relationship in with price with a higher review score
+  geom_smooth(method = lm) +
+      labs(
+      title = "Scatter plot showing relationship between review scores and price",
+      x = "Review scores",
+      y = "price per night (log)",
+      caption = "Source: AirBnB"
+    ) +
+  NULL
 
-=======
-# Map price to seven colors using quantiles
-qpal <- colorQuantile("Reds", listings_filtered_4nights$price, n = 7)
-
-listings_filtered_4nights %>% 
-  leaflet() %>% 
-  addProviderTiles("OpenStreetMap.Mapnik") %>% 
-  addCircleMarkers(lng = ~longitude, 
-                   lat = ~latitude, 
-                   radius = 1,
-                   fillOpacity = 0.4, 
-                   popup = ~listing_url,
-                   label = ~property_type,
-                   color = ~qpal(price))
->>>>>>> 2f2e5f3ce6557a22b1c52fdc30259191ec080f7f
 ```
+From this we can conclude that being a superhost does have an influence on the price. People would prefer a superhost, so it seems logical that the average price for a superhost is higher than a listing under a normal host. The ratings however don't seem to be related to being a superhost. In fact the perfect scores are more among non-superhosts. This could be because of the higher expectations set by booking via a superhost, this could make guests more critical when writing a review. finally, there does not seem to be a strong correlation with a rating score and the price. Hosts will not alter their prices to their review scores.
 
 ###GGpairs
 
-```{r}
-
-listings_clean %>% 
-  ggpairs()
-
+To display a comprehensive overview of the correlation between variables and the price we plotted a GGpairs plot. Using all the selected variables.
+```{r ggpairs plot}
+# Display the correlation between four important variables
+listings<-listings %>%
+  filter(minimum_nights == 4)
+listings_matrix <- listings %>%
+  select(price, square_feet ,bedrooms, bathrooms) %>% 
+  ggpairs(listings_matrix, columns = 1:4)
 ```
 
 
@@ -437,13 +421,6 @@ listings_clean %>%
 # REGRESSION
 
 ## Basic explanatory variables  
-
-```{r}
-# Remove variables that will not be needed 
-# listings_clean <- listings %>%
-#   select(id, price, guests_included, cleaning_fee, extra_people, prop_type_simplified, number_of_reviews, review_scores_ratings, room_type, )
-```
-
 
 ```{r}
 # Create new variable for 4 nights using price, guests_included, cleaning_fee and extra_people
