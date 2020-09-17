@@ -139,6 +139,27 @@ listings%>%
 listings_filtered_4nights <- listings %>%
   filter(minimum_nights <= 4)
 
+#Selecting the variables that will be used in the analysis as to remove the redundant variables.
+listings_clean <- listings %>%
+  select(id, 
+         listing_url, 
+         price, 
+         guests_included, 
+         cleaning_fee, 
+         extra_people, 
+         prop_type_simplified, 
+         number_of_reviews, 
+         review_scores_rating, 
+         room_type, bathrooms, 
+         bedrooms, beds, 
+         accommodates, 
+         host_is_superhost, 
+         is_location_exact, 
+         neighbourhood_cleansed, 
+         cancellation_policy, 
+         longitude, latitude
+        )
+
 ```
 <<<<<<< HEAD
 
@@ -147,7 +168,7 @@ Let's have a look at the data.
 ```{r skim the new list}
 
 #check if all the variables are in the correct type
-skim(listings) 
+skim(listings_clean) 
 
 ```
 
