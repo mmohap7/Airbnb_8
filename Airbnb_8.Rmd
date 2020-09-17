@@ -4,11 +4,9 @@ output: html_document
 ---
 
 ```{r load_packages, warning=FALSE, message=FALSE, echo=FALSE}
-
 list.of.packages <- c("ggplot2", "Rcpp", "tidyverse", "mosaic", "ggfortify", "moderndive", "janitor", "huxtable", "here", "broom", "skimr", "GGally", "car", "vroom")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
-
 library(tidyverse)
 library(mosaic)
 library(ggfortify)
@@ -87,8 +85,9 @@ The next step is to check the data for the properties of the variables and if th
 #Get an overview of the size of the data and the variables
 glimpse(listings) 
 
+
 #Create an overview of the variables and their distribution, while checking for any missing or NA values
-skim(listings) 
+skim(listings)
 
 ```
 
@@ -101,6 +100,7 @@ From this list can be concluded that there are 28,523 values for 106 variables. 
 In this section we will clean the data and run summary statistics that will be visualised in the next section. First the values stored as characters are converted to numeric values and the $-sign removed.
 
 ```{r cleaning data stored as character}
+
 # make price into a numeric variable
 listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) 
 
@@ -109,6 +109,7 @@ listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee))
 
 # make extra people a numeric variable
 listings$extra_people = as.numeric(gsub("[\\$,]", "", listings$extra_people))
+
 ```
 
 
@@ -128,6 +129,7 @@ listings <- listings %>%
 The property type categorical variables has too many categories to be summarised. To reduce this, the 4 most substantial categories have been specified, the remainder will be classed as other.
 
 ```{r cleaning data by reducing property type criteria}
+
 #create a list of property types and the count
 listings%>% 
   group_by(property_type)%>%
@@ -146,6 +148,13 @@ listings <- listings %>%
 To only have a list of variables that will be used in the analysis, the important variables are filtered out. 
 
 ```{r filtering}
+
+#check if all the variables are in the correct type
+skim(listings) 
+
+```
+
+```{r filtering, echo=FALSE}
 
 #displaying table with the count in descending order for the minimum nights
 listings%>%     
@@ -194,12 +203,11 @@ skim(listings_clean)
 
 
 ```
+
 > The most common values are 2,3,1,4,5.That means renting for a five days or less.
 We see that there is a dramatic decrease of the number of listing from 5 days and above and this may be due to the fact that people staying for lomger periods are not here for travel purposes but for other reasons such as work, living etc.
 
-
 ```{r, echo=FALSE}
-
 #Taking the filtered listings with a min of 4 nights and create a map of the apartments in Copenhagen
 listings_filtered_4nights %>% 
 leaflet() %>% 
@@ -214,16 +222,13 @@ leaflet() %>%
                    clusterOptions = markerClusterOptions()
                   )
   
-
 ```
 
 ```{r}
-
 #Calculated median price per night for each property type
 average_per_proptype <- listings_filtered_4nights %>% 
   group_by(prop_type_simplified) %>% 
   summarise(median_price = median(price))
-
 #Plotted a bar chart with median price per night for each property type
 average_per_proptype %>% 
   ggplot(aes(
@@ -237,12 +242,10 @@ average_per_proptype %>%
     y = "Median price per night",
     caption = "Source: AirBnB"
   )
-
 #Calculated median price per night for each room type
 median_per_roomtype <- listings_filtered_4nights %>% 
   group_by(room_type) %>% 
   summarise(median_price = median(price))
-
 #Price per night for each room type
 median_per_roomtype %>% 
   ggplot(aes(
@@ -256,18 +259,30 @@ median_per_roomtype %>%
     y = "Median price per night",
     caption = "Source: AirBnB"
   )
-
 listings<-listings%>%
   filter(minimum_nights == 4)
-
 listings_matrix<- listings %>%
   select(price, square_feet ,bedrooms, bathrooms) 
-
 ggpairs(listings_matrix, columns = 1:4)
-
-
 ```
 
+
+
+```{r}
+#maps price to seven colors using quantiles
+qpal <- colorQuantile("Reds", listings_filtered_4nights$price, n = 7)
+
+listings_filtered_4nights %>% 
+leaflet() %>% 
+  addProviderTiles("OpenStreetMap.Mapnik") %>% 
+  addCircleMarkers(lng = ~longitude, 
+                   lat = ~latitude, 
+                   radius = 1,
+                   fillOpacity = 0.4, 
+                   popup = ~listing_url,
+                   label = ~property_type,
+                   color = ~qpal(price))
+```
 
 # REGRESSION
 
@@ -287,32 +302,31 @@ listings_new <- listings_filtered_4nights %>%
            ifelse(guests_included <= 1,
                   (price + extra_people) * 4 + cleaning_fee,
                   (price) * 4 + cleaning_fee))
-
 ```
 
 ```{r,fig.width=20}
-
 # density plots for price_4_nights
 density.default(listings_new$price_4_nights)
 
-# calculate maximum (most often?) occurring price for 4 nights 
+# calculate the most frequently occurring price (mode) for 4 nights 
 max_p4n<-density(listings_new$price_4_nights)$x[which.max(density(listings_new$price_4_nights)$y)]
-
 max_p4n
 
 # plot density of price_4_nights
-ggplot(listings_new,aes(x=price_4_nights))+
+ggplot(
+  listings_new,
+  aes(x=price_4_nights))+
   geom_density() +
-  geom_vline(xintercept = density(listings_new$price_4_nights)$x[which.max(density(listings_new$price_4_nights)$y)]) # plot vertical line to show maximum value
+  # plot vertical line to show maximum value
+  geom_vline(xintercept =  max_p4n)  
 
 # plot density of log(price_4_nights)
 ggplot(listings_new,aes(x=log(price_4_nights)))+
   geom_density()
-
 ```
 
 Answer: we should use variable log(price_4_nights). Looking at the density plots of
-price_4_nights and log(price_4_nights), we can see clearly that log(price_4_nights) is more close to a normal distribution, while most values in price_4_nights are cramped within a very small range(what function is it called?????)
+price_4_nights and log(price_4_nights), we can see clearly that log(price_4_nights) is more close to a normal distribution, while most values in price_4_nights are cramped within a very small range.
 
 
 ### Model 1
@@ -324,7 +338,6 @@ Fitting a regression model called model1 with the following explanatory variable
 listings_log <- listings_new %>%
   mutate(price_4_nights_log = log10(price_4_nights)) 
   
-
 # create model1 of price_4_nights with explanatory variables prop_type_simplified, number_of_reviews and review_scores_ratings
 model1<-lm(price_4_nights_log ~
               prop_type_simplified +
@@ -332,22 +345,22 @@ model1<-lm(price_4_nights_log ~
               review_scores_rating +
              NULL,
             data = listings_log)
-model1 %>%
-  tidy(conf.int=TRUE)
-model1 %>%
-  glance()
-
+model1 %>% tidy(conf.int=TRUE)
+model1 %>% glance()
 # check residuals
 autoplot(model1)
+``` 
 
-```
-Interpret the coefficient review_scores_rating in terms of price_4_nights:
-for every increase in rating by 1 point, the price goes up by 0.0023$ ??? -> check with log transformation
+Interpretation of review_scores_rating predictor:
 
-Interpret the coefficient of prop_type_simplified in terms of price_4_nights:
+> Ratings (review_scores_rating) is a significant predictor. Controlling for other variables, every 1 point increase in rating is associated with $ 0.002 increase in log10(price_4_nights).
+
+Interpretation of prop_type_simplified predictor:
+
+> Property type (prop_type_simplified) is a significant predictor. Controlling for other variables, switching property type from apartment to condomunium would result in 0.034 increase in log10(price_4_nights). Similarly, switching property type from apartment to house would result in 0.11 increase in log10(price_4_nights); switching property type from apartment to townhouse would result in 0.17 increase in log10(price_4_nights); switching property type from apartment to property types other than the aforementioned 3 types would result in an average of 0.18 increase in log10(price_4_nights)
+
 
 #### Model 1: 4%
-
 
 ### Model 2
 
@@ -364,13 +377,18 @@ model2<-lm(price_4_nights_log ~
             data = listings_log)
 model2 %>% tidy(conf.int=TRUE)
 model2 %>% glance()
+<<<<<<< HEAD
 
+=======
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
 # check residuals
 autoplot(model2)
-
 ```
-Interpret if if room_type is a significant predictor 
-It is 
+
+Interpretation of room_type predictor:
+
+> The result of model2 regression shows that rooms_type is a significant predictor.
+Controlling for other variables, switching room type from entire house to hotel room would result in 0.11 increase in log10(price_4_nights). Nevertheless, switching from entire house to private room would result in 0.27 drop in log10(price_4_nights); switching from entire house to shared room would result in 0.38 drop in log10(price_4_nights).
 
 #### Model 2: 24% 
 
@@ -398,19 +416,16 @@ model3a %>%
   tidy(conf.int=TRUE)
 model3a %>%
   glance()
-
 # test VIF
 car::vif(model3a)
-
 # check residuals
 autoplot(model3a)
-
 ```
 
-The number of bathrooms, bedrooms, beds, and size of the house (accommodates) are all significant predictors of price_4_nights. However, there might be a problem with multi-collinearity since intuitively bathrooms, bedrooms and beds should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceptable range.
-# beds is also not signifiant? -> check this
+Interpretation of bathrooms, bedrooms, beds, and size of the house (accommodates) predictors:
 
-However, the prop_type becomes not a significant predictor anymore, thus we will include it from the following analyses:
+> The number of bathrooms, bedrooms and size of the house (accommodates) are  significant predictors of log10(price_4_nights) and are all positively related with price_4_nights, while number of beds is not a significant predictor. Coefficients show that each additional bathroom is associated with 0.06 increase in log10(price_4_nights); each additional bedroom is associated with 0.05 increase in log10(price_4_nights).
+There might be a problem with multi-collinearity since intuitively the number of bathrooms and bedrooms should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceptable range.
 
 ```{r model3}
 # create model3 by removing prop_type from model3a 
@@ -423,17 +438,12 @@ model3<-lm(price_4_nights_log ~
              bedrooms +
              accommodates, 
             data = listings_log)
-model3 %>% 
-  tidy(conf.int=TRUE)
-model3 %>% 
-  glance()
-
+model3 %>% tidy(conf.int=TRUE)
+model3 %>% glance()
 # test VIF
 car::vif(model3)
-
 # check residuals
 autoplot(model3)
-
 ```
 
 Model 3: 41%
@@ -457,15 +467,19 @@ model4<-lm(price_4_nights_log ~
             data = listings_log)
 model4 %>% tidy(conf.int=TRUE)
 model4 %>% glance()
+<<<<<<< HEAD
 
+=======
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
 # test VIF
 car::vif(model4)
-
 # check residuals
 autoplot(model4)
-
 ```
-Since the p-value for the estimate of the superhost coefficient is  significant (with a p-value of 0.36 and a t-statistic of 0.9), it seems that superhosts do command a price premium from their guests in Copenhagen. -> interpret coefficient 
+
+Interpretation of superhost predictor:
+
+> Since the p-value for the estimate of the superhost coefficient is  significant (with a p-value of 0.36 and a t-statistic of 0.9), it seems that superhosts do command a price premium from their guests in Copenhagen. Compared to non-superhost, being a superhost is associated with 0.03 increase in log10(price_4_nights).
 
 ```{r}
 # create model4b by adding host_is_superhost to model4 and create an interaction variable 
@@ -481,14 +495,18 @@ model4b<-lm(price_4_nights_log ~
             data = listings_log)
 model4b %>% tidy(conf.int=TRUE)
 model4b %>% glance()
+<<<<<<< HEAD
 
+=======
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
 # test VIF
 car::vif(model4b)
-
 # check residuals
 autoplot(model4b)
 ```
-Interaction variable is not significant, do not include.
+
+Interaction variable host_is_superhost*review_scores_rating is not significant, therefore we do not include it.
+
 
 
 #### Model 4: 41% 
@@ -499,7 +517,7 @@ Interaction variable is not significant, do not include.
 Most owners advertise the exact location of their listing (is_location_exact == TRUE), while a non-trivial proportion don’t. After controlling for other variables, is a listing’s exact location a significant predictor of price_4_nights?
 
 ```{r model5}
-# create model5 by adding is_location_exact == TRUE to model3
+# create model5 by adding is_location_exact == TRUE to model4
 model5<-lm(price_4_nights_log ~
              prop_type_simplified +
              number_of_reviews +
@@ -512,17 +530,26 @@ model5<-lm(price_4_nights_log ~
              data = listings_log)
 model5 %>% tidy(conf.int=TRUE)
 model5 %>% glance()
+<<<<<<< HEAD
 
+=======
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
 # test VIF
 car::vif(model5)
-
 # check residuals
 autoplot(model5)
-
 ```
-A listing’s exact location is not a significant predictor of price_4_nights, thus we will not include it in the following models 
+
+Interpretation of exact location variable:
+
+<<<<<<< HEAD
+=======
+> A listing’s exact location variable has a p value of 0.34, and therefore is not a significant predictor of price_4_nights. Thus, we will not include it in the following models.
+
+#### Model 4: 41% 
 
 
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
 ### Model 6
 
 In order to reduce the number of neighbourhoods for our analysis we cluster the different neighbourhoods into groups, based on our experience, talking to locals, and research.
@@ -548,7 +575,6 @@ listings_log <- listings_log %>%
     neighbourhood_cleansed %in% c("Brnshj-Husum","Valby", "Vanlose") ~ "West",
     TRUE ~ "Nordvest"
   ))
-
 # create model6 by adding neighbourhood_simplified to model3
 model6<-lm(price_4_nights_log ~
             prop_type_simplified +
@@ -563,16 +589,25 @@ model6<-lm(price_4_nights_log ~
              data = listings_log)
 model6 %>% tidy(conf.int=TRUE)
 model6 %>% glance()
+<<<<<<< HEAD
 
+=======
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
 # test VIF
 car::vif(model6)
-
 # check residuals
 autoplot(model6)
-
 ```
+<<<<<<< HEAD
 One can see that the neighbourhood of an apartment is an predictor of the price for 4 nights in Copenhagen.
 
+=======
+
+Interpretation of neighbourhood predictor:
+
+> We can see that all the neighbourhood variables are significant predictors of the price for 4 nights in Copenhagen. Taking Amager as the base, Brokvarterer is asscociated with 0.03 more in log10(price_4_nights); Center is asscociated with 0.16 more in log10(price_4_nights); Nordvest is asscociated with 0.09 drop in log10(price_4_nights); West is asscociated with 0.09 drop in log10(price_4_nights).
+
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
 #### Model 6: 50%
 
 
@@ -580,7 +615,10 @@ One can see that the neighbourhood of an apartment is an predictor of the price 
 
 What is the effect of cancellation_policy on price_4_nights, after we control for other variables?
 ```{r model7}
+<<<<<<< HEAD
 
+=======
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
 # create model7 by adding cancellation_policy to model6
 model7<-lm(price_4_nights_log ~
             prop_type_simplified +
@@ -595,16 +633,26 @@ model7<-lm(price_4_nights_log ~
              data = listings_log)
 model7 %>% tidy(conf.int=TRUE)
 model7 %>% glance()
+<<<<<<< HEAD
 
+=======
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
 # test VIF
 car::vif(model7)
-
 # check residuals
 autoplot(model7)
-
 ```
+<<<<<<< HEAD
 The cancellation policy is a significant predictor on price, with a flexible policy commanding the lowest price and with a strict policy commanding the highest price. This is surprising since usually hosts should be rewarded for the risk that they are taking with a flexibly cancellation policy. On the flipside, usually expensive and nice places have a stricter cancellation policy since they cannot afford to not have anyone live in their AirBnB. Thus, in the end the cancellation policy might rather be a consequence of the price and not a predictor of it. 
 
+=======
+
+Interpretation of cancellation policy predictor:
+
+> The cancellation policy is a significant predictor on price, with a flexible policy commanding the lowest price and with a strict policy commanding the highest price. This is surprising since usually hosts should be rewarded for the risk that they are taking with a flexible cancellation policy. On the other hand, usually expensive and nice places have a stricter cancellation policy since the cost of having the place empty for a night is relatively higher. Thus, in the end the cancellation policy might rather be a consequence of the price and not a predictor of it. 
+
+#### Model 6: 51%
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
 
 
 # PREDICTION
@@ -644,7 +692,6 @@ final_model <- lm(price_4_nights_log ~
              NULL,
              data = listings_log)
 mosaic::msummary(final_model)
-
 get_regression_table(final_model)
 get_regression_summaries(final_model)
 vif(final_model)
@@ -654,6 +701,7 @@ vif(final_model)
 
 We are planning to visit Copenhagen and want to stay in an Airbnb. We would like to look at Airbnbs that are apartments with a private room, have at least 10 reviews, and an average rating of at least 90. 
 
+<<<<<<< HEAD
 We will predict the total cost to stay at this Airbnb for 4 nights, including the appropriate 95% interval with the prediction. (Report the point prediction and interval in terms of price_4_nights)
 
 ```{r predict-price, warning=FALSE}
@@ -664,68 +712,125 @@ listings_predict <- listings_log %>%
          number_of_reviews >= 10,
          review_scores_rating >= 90,
          prop_type_simplified %in% c("Apartment", "Condominium", "House")) # there are no values for Townhouse or Other after filtering for our conditions, so we exclude the from the dataset
+=======
+We will predict the total cost to stay at this Airbnb for 4 nights, including the appropriate 95% interval with the prediction.
 
-# When we plug this multi-row data frame into predict(), it'll generate a
-# prediction for each row
-predict(final_model, newdata = listings_predict, interval = "prediction")
+```{r predict-price, warning=FALSE}
+# filter our the data by room_type, nr of reviews and rating
+listings_predict_log <- listings_log %>% 
+  filter(room_type == "Private room",
+         number_of_reviews >= 10,
+         review_scores_rating >= 90) 
 
-# We can also use broom::augment(). It's  essentially the same thing as predict(), 
-# but it adds the predictions and confidence intervals to the imaginary constituency 
-model_predictions <- broom::augment(final_model, 
-                             newdata = listings_predict)
+listings_predict_log
 
+# # generate a prediction for each row
+# predict(final_model, newdata = listings_predict_log, interval = "prediction")
+# 
+# # generate a prediction for each row with broom 
+# model_predictions_log <- broom::augment(final_model, 
+#                              newdata = listings_predict_log)
+# 
+# 
+# 
+# model_predictions
+
+# augment the model
+model_final_augment <- augment(final_model)
+
+model_final_augment
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
+
+# convert prices back from log
+model_predictions <- model_final_augment %>%
+  mutate(fitted_price_final = 10^(.fitted))
+
+model_predictions
+```
+
+```{r graph-predictions, warning=FALSE}
 # graph distribution of fitted values and converting the log values back to normal dollar prices 
-ggplot(model_predictions, aes(x = 10^(.fitted))) +
+ggplot(model_predictions, aes(x = fitted_price_final)) +
   geom_density() +
-  labs(y = "Predicted leave share",
-       x = "Proportion of constituency with a university degree") +
+  labs(y = "",
+       x = "Price of an AirBnB in Copenhagen") +
   theme_bw()
-
 # facet by neighbourhood
-ggplot(model_predictions, aes(x = 10^(.fitted))) +
+ggplot(model_predictions, aes(x = fitted_price_final)) +
   geom_density() +
-  labs(y = "Predicted leave share",
-       x = "Proportion of constituency with a university degree") +
+  labs(y = "",
+       x = "Price of an AirBnB in Copenhagen") +
   facet_wrap(~neighbourhood_simplified) +
   theme_bw()
+<<<<<<< HEAD
 
 # facet by prop_type_simplified
 ggplot(model_predictions, aes(x = 10^(.fitted))) +
+=======
+# facet by prop_type_simplified
+ggplot(model_predictions, aes(x = fitted_price_final)) +
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
   geom_density() +
-  labs(y = "Predicted leave share",
-       x = "Proportion of constituency with a university degree") +
+  labs(y = "",
+       x = "Price of an AirBnB in Copenhagen") +
   facet_wrap(~prop_type_simplified) +
   theme_bw()
+<<<<<<< HEAD
 
 # facet by neighbourhood & prop_type_simplified
 ggplot(model_predictions, aes(x = 10^(.fitted))) +
+=======
+# facet by neighbourhood & prop_type_simplified
+ggplot(model_predictions, aes(x = fitted_price_final)) +
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
   geom_density() +
-  labs(y = "Predicted leave share",
-       x = "Proportion of constituency with a university degree") +
+  labs(y = "",
+       x = "Price of an AirBnB in Copenhagen") +
   facet_grid(neighbourhood_simplified~prop_type_simplified) +
   theme_bw()
-
 ```
+<<<<<<< HEAD
 ```{r}
 # find mean and median of the fitted prices
 model_predictions %>%
   summarize(mean_price = mean(price_final), median_price = median(price_final))
 
+=======
+
+```{r}
+# find mean and median of the fitted prices
+model_predictions %>%
+  summarize(mean_price = mean(fitted_price_final), median_price = median(fitted_price_final))
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
 ```
 
 > As the price distribution is **right skewed**, choosing mean as measure to predict the final price wouldn't be economical so we've decided to use the median because it fits our budget.
 
 ```{r}
 # locate the median value property
+<<<<<<< HEAD
 predicted_value<-listings_predict %>%
   filter(price_final == median(price_final))
 predicted_value
 
 ```
+=======
+predicted_value<-listings_predict_log %>%
+  filter(fitted_price_final == median(fitted_price_final))
+predicted_value
+```
+
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
 
 
 
 To DO
+<<<<<<< HEAD
 - select relevant variables
 - interaction variables
 - write out explanations & analyses
+=======
+- write out explanations & analyses (e.g. for residual plots)
+- add titles to graphs
+
+>>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
