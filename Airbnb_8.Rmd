@@ -13,7 +13,7 @@ output:
 ---
 
 ```{r load_packages, warning=FALSE, message=FALSE, echo=FALSE}
-list.of.packages <- c("ggplot2", "Rcpp", "tidyverse", "mosaic", "ggfortify", "moderndive", "janitor", "huxtable", "here", "broom", "skimr", "GGally", "car", "vroom")
+list.of.packages <- c("ggplot2", "Rcpp", "tidyverse", "mosaic", "ggfortify", "moderndive", "janitor", "huxtable", "here", "broom", "skimr", "GGally", "car", "vroom", "kableExtra")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 library(tidyverse)
@@ -30,6 +30,7 @@ library(car)
 library(vroom)
 library(GGally)
 library(leaflet)
+library(kableExtra)
 
 ```
 
@@ -75,7 +76,8 @@ First of all, the data needs to be loaded. The clean_names() function is used to
 listings <- vroom("http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/listings.csv.gz") %>%
   
     # Get the listings for Copenhagen
-    clean_names()  
+    clean_names() 
+  
 ```
 
 Having looked at the data, the following variables will be of importance throughout this analysis:
@@ -106,10 +108,12 @@ The next step is to check the data for the properties of the variables and if th
 ```{r, exploration, echo=FALSE, cache=TRUE}
 
 # Look at the raw values
-glimpse(listings)
+glimpse(listings) %>%
+  kable()
 
 # Compute summary statistics of the variables of interest, or find NAs
-skim(listings) 
+skim(listings) %>%
+  kable()
 
 ```
 
@@ -154,13 +158,14 @@ The property type categorical variables has too many categories to be summarised
 listings%>% 
   group_by(property_type)%>%
   summarise(count= n())%>%
-  arrange(desc(count))
+  arrange(desc(count))%>%
+  kable()
 
 # Take top 4 property_type and create a new column and assigning property_type in groups
 listings <- listings %>%
   mutate(prop_type_simplified = case_when(
-    property_type %in% c("Apartment","Condominium", "House","Townhouse") ~ property_type, 
-    TRUE ~ "Other"
+  property_type %in% c("Apartment","Condominium", "House","Townhouse") ~ property_type, 
+  TRUE ~ "Other"
   ))
 
 # Check if all the variables are in the correct type
@@ -170,13 +175,14 @@ skim(listings)
 
 To only have a list of variables that will be used in the analysis, redundant variables are filtered out. As the analysis focuses on short holiday stays, the long stay listings need to be removed from the list. By looking at the minimum nights on the listings, it can be determined if these addresses are viable for short stays.
 
-```{r summarising minimum nights, echo=FALSE}
+```{r summarising minimum nights, echo=FALSE, message=FALSE}
 
 # Display table with the count in descending order for the minimum nights
 listings %>%     
   group_by(minimum_nights) %>%
   summarise(count= n()) %>%
-  arrange(desc(count))
+  arrange(desc(count)) %>%
+  kable()
 
 ```
 
@@ -287,7 +293,7 @@ median_per_neighborhood %>%
     title = "Median price per night per neighborhood",
     x = "",
     y = "Median price per neighborhood",
-    caption = "Source: AirBnB"
+    caption = "Source: Airbnb"
   ) +
   coord_flip() +
   NULL
@@ -408,7 +414,7 @@ listings_clean %>%
       title = "Scatter plot showing relationship between review scores and price",
       x = "Review scores",
       y = "price per night (log)",
-      caption = "Source: AirBnB"
+      caption = "Source: Airbnb"
     ) +
   
   NULL
@@ -824,8 +830,10 @@ huxreg(model1, model2, model3, model4, model5, model6, model7,
                       ), 
        bold_signif = 0.05, 
        stars = NULL
-) %>% 
-  set_caption('Comparison of models')
+      ) %>% 
+  set_caption('Comparison of models')%>%
+  kable()
+  
 
 ```
 
@@ -977,8 +985,21 @@ As the price distribution is **right skewed**, choosing mean as measure to predi
 ```{r printing predicted value}
 predicted_value <- model_predictions %>%
 
+<<<<<<< HEAD
   filter(fitted_price_final == median(fitted_price_final, na.rm = TRUE))
 
+=======
+```
+
+print(predicted_value$lower_final) + print(predicted_value$fitted_price_final) + print(predicted_value$upper_final)
+
+=======
+# locate the median value property
+predicted_value <- model_predictions %>%
+  filter(fitted_price_final == median(fitted_price_final, na.rm = TRUE))
+  filter(fitted_price_final <= median(fitted_price_final, na.rm = TRUE), 
+         fitted_price_final >= median(fitted_price_final, na.rm = TRUE))
+>>>>>>> 0e04536b9df3b4269912549b1ce7e7acfc6f8905
 
 predicted_value %>% 
   select(listing_url, accommodates, price, cleaning_fee, extra_people, prop_type_simplified, room_type, review_scores_rating, bathrooms, bedrooms, beds, neighbourhood_cleansed, )
