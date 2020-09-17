@@ -227,20 +227,26 @@ listings_new <- listings_filtered_4nights %>%
 ```{r,fig.width=20}
 # density plots for price_4_nights
 density.default(listings_new$price_4_nights)
-# calculate maximum (most often?) occurring price for 4 nights 
+
+# calculate the most frequently occurring price (mode) for 4 nights 
 max_p4n<-density(listings_new$price_4_nights)$x[which.max(density(listings_new$price_4_nights)$y)]
 max_p4n
+
 # plot density of price_4_nights
-ggplot(listings_new,aes(x=price_4_nights))+
+ggplot(
+  listings_new,
+  aes(x=price_4_nights))+
   geom_density() +
-  geom_vline(xintercept = density(listings_new$price_4_nights)$x[which.max(density(listings_new$price_4_nights)$y)]) # plot vertical line to show maximum value
+  # plot vertical line to show maximum value
+  geom_vline(xintercept =  max_p4n)  
+
 # plot density of log(price_4_nights)
 ggplot(listings_new,aes(x=log(price_4_nights)))+
   geom_density()
 ```
 
 Answer: we should use variable log(price_4_nights). Looking at the density plots of
-price_4_nights and log(price_4_nights), we can see clearly that log(price_4_nights) is more close to a normal distribution, while most values in price_4_nights are cramped within a very small range(what function is it called?????)
+price_4_nights and log(price_4_nights), we can see clearly that log(price_4_nights) is more close to a normal distribution, while most values in price_4_nights are cramped within a very small range.
 
 
 ### Model 1
@@ -265,14 +271,18 @@ model1 %>%
   glance()
 # check residuals
 autoplot(model1)
-```
-Interpret the coefficient review_scores_rating in terms of price_4_nights:
-for every increase in rating by 1 point, the price goes up by 0.0023$ ??? -> check with log transformation
+``` 
 
-Interpret the coefficient of prop_type_simplified in terms of price_4_nights:
+Interpretation of review_scores_rating predictor:
+
+> Ratings (review_scores_rating) is a significant predictor. Controlling for other variables, every 1 point increase in rating is associated with $ 0.002 increase in log10(price_4_nights).
+
+Interpretation of prop_type_simplified predictor:
+
+> Property type (prop_type_simplified) is a significant predictor. Controlling for other variables, switching property type from apartment to condomunium would result in 0.034 increase in log10(price_4_nights). Similarly, switching property type from apartment to house would result in 0.11 increase in log10(price_4_nights); switching property type from apartment to townhouse would result in 0.17 increase in log10(price_4_nights); switching property type from apartment to property types other than the aforementioned 3 types would result in an average of 0.18 increase in log10(price_4_nights)
+
 
 #### Model 1: 4%
-
 
 ### Model 2
 
@@ -292,8 +302,11 @@ model2 %>% glance()
 # check residuals
 autoplot(model2)
 ```
-Interpret if if room_type is a significant predictor 
-It is 
+
+Interpretation of room_type predictor:
+
+> The result of model2 regression shows that rooms_type is a significant predictor.
+Controlling for other variables, switching room type from entire house to hotel room would result in 0.11 increase in log10(price_4_nights). Nevertheless, switching from entire house to private room would result in 0.27 drop in log10(price_4_nights); switching from entire house to shared room would result in 0.38 drop in log10(price_4_nights).
 
 #### Model 2: 24% 
 
@@ -314,8 +327,7 @@ model3a<-lm(price_4_nights_log ~
              bathrooms +
              bedrooms +
              beds + 
-             accommodates +
-             NULL, 
+             accommodates,
             data = listings_log)
 model3a %>% 
   tidy(conf.int=TRUE)
@@ -327,10 +339,12 @@ car::vif(model3a)
 autoplot(model3a)
 ```
 
-The number of bathrooms, bedrooms, beds, and size of the house (accommodates) are all significant predictors of price_4_nights. However, there might be a problem with multi-collinearity since intuitively bathrooms, bedrooms and beds should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceptable range.
-# beds is also not signifiant? -> check this
+Interpretation of bathrooms, bedrooms, beds, and size of the house (accommodates) predictors:
 
-However, the prop_type becomes not a significant predictor anymore, thus we will include it from the following analyses:
+> The number of bathrooms, bedrooms and size of the house (accommodates) are  significant predictors of log10(price_4_nights) and are all positively related with price_4_nights, while number of beds is not a significant predictor. Coefficients show that each additional bathroom is associated with 0.06 increase in log10(price_4_nights); each additional bedroom is associated with 0.05 increase in log10(price_4_nights).
+There might be a problem with multi-collinearity since intuitively the number of bathrooms and bedrooms should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceptable range.
+
+????????However, the prop_type becomes not a significant predictor anymore, thus we will include it from the following analyses:
 
 ```{r model3}
 # create model3 by removing prop_type from model3a 
@@ -379,7 +393,10 @@ car::vif(model4)
 # check residuals
 autoplot(model4)
 ```
-Since the p-value for the estimate of the superhost coefficient is  significant (with a p-value of 0.36 and a t-statistic of 0.9), it seems that superhosts do command a price premium from their guests in Copenhagen. -> interpret coefficient 
+
+Interpretation of superhost predictor:
+
+> Since the p-value for the estimate of the superhost coefficient is  significant (with a p-value of 0.36 and a t-statistic of 0.9), it seems that superhosts do command a price premium from their guests in Copenhagen. Compared to non-superhost, being a superhost is associated with 0.03 increase in log10(price_4_nights).
 
 ```{r}
 # create model4b by adding host_is_superhost to model4 and create an interaction variable 
@@ -400,7 +417,8 @@ car::vif(model4b)
 # check residuals
 autoplot(model4b)
 ```
-Interaction variable is not significant, do not include.
+
+Interaction variable host_is_superhost*review_scores_rating is not significant, therefore we do not include it.
 
 
 #### Model 4: 41% 
@@ -429,7 +447,10 @@ car::vif(model5)
 # check residuals
 autoplot(model5)
 ```
-A listing’s exact location is not a significant predictor of price_4_nights, thus we will not include it in the following models 
+
+Interpretation of exact location variable:
+
+> A listing’s exact location variable has a p value of 0.34, and therefore is not a significant predictor of price_4_nights. Thus, we will not include it in the following models.
 
 
 ### Model 6
@@ -476,7 +497,11 @@ car::vif(model6)
 # check residuals
 autoplot(model6)
 ```
-One can see that the neighbourhood of an apartment is an predictor of the price for 4 nights in Copenhagen.
+
+Interpretation of neighbourhood predictor:
+
+> We can see that all the neighbourhood variables are significant predictors of the price for 4 nights in Copenhagen. Taking Amager as the base, Brokvarterer is asscociated with 0.03 more in log10(price_4_nights); Center is asscociated with 0.16 more in log10(price_4_nights); Nordvest is asscociated with 0.09 drop in log10(price_4_nights); West is asscociated with 0.09 drop in log10(price_4_nights).
+
 
 #### Model 6: 50%
 
@@ -504,7 +529,10 @@ car::vif(model7)
 # check residuals
 autoplot(model7)
 ```
-The cancellation policy is a significant predictor on price, with a flexible policy commanding the lowest price and with a strict policy commanding the highest price. This is surprising since usually hosts should be rewarded for the risk that they are taking with a flexibly cancellation policy. On the flipside, usually expensive and nice places have a stricter cancellation policy since they cannot afford to not have anyone live in their AirBnB. Thus, in the end the cancellation policy might rather be a consequence of the price and not a predictor of it. 
+
+Interpretation of cancellation policy predictor:
+
+> The cancellation policy is a significant predictor on price, with a flexible policy commanding the lowest price and with a strict policy commanding the highest price. This is surprising since usually hosts should be rewarded for the risk that they are taking with a flexible cancellation policy. On the other hand, usually expensive and nice places have a stricter cancellation policy since the cost of having the place empty for a night is relatively higher. Thus, in the end the cancellation policy might rather be a consequence of the price and not a predictor of it. 
 
 
 
