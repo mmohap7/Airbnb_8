@@ -682,25 +682,25 @@ ggplot(model_predictions, aes(x = 10^(.fitted))) +
 ```
 ```{r}
 # Splitting data in training and testing sets
-# library(rsample)
-# set.seed(1234)  # for reproducibility, and to always get the same split, set the random seed first
+ library(rsample)
+ set.seed(1234)  # for reproducibility, and to always get the same split, set the random seed first
 # 
-# train_test_split <- initial_split(listings_log, prop = 0.75)
-# listings_train <- training(train_test_split)
-# listings_test <- testing(train_test_split)
+ train_test_split <- initial_split(listings_log, prop = 0.80)
+ listings_train <- training(train_test_split)
+ listings_test <- testing(train_test_split)
 # 
-# rmse_train <- listings_train %>%
-#   mutate(predictions = predict(final_model, .)) %>%
-#   summarise(sqrt(sum(predictions - price_4_nights_log)**2/n())) %>% 
-#   pull()
-# rmse_train
+ rmse_train <- listings_train %>%
+   mutate(predictions = predict(final_model, .)) %>%
+  summarise(sqrt(sum(predictions - price_4_nights_log,na.rm = TRUE)**2/n())) %>% 
+   pull()
+ rmse_train
 # # [1] 2.3212
 # 
-# rmse_test <- listings_test %>%
-#   mutate(predictions = predict(final_model, .)) %>%
-#   summarise(sqrt(sum(predictions - price_4_nights_log)**2/n())) %>% 
-#   pull()
-# rmse_test
+rmse_test <- listings_test %>%
+  mutate(predictions = predict(final_model, .)) %>%
+   summarise(sqrt(sum(predictions - price_4_nights_log,na.rm = TRUE)**2/n())) %>% 
+   pull()
+ rmse_test
 # # [1] 4.0204
 ```
 
@@ -727,11 +727,44 @@ predicted_value
 
 ```{r}
 
-# predict for differnt nghds cuy they are sign
-# final_listing <- predicted_value %>%
-  
+# predict for differnt nghds cuy they are signpred
+predicted_value%>%group_by(neighbourhood)%>%summarise(mean=mean(price),mean_ratings=mean(review_scores_value))
+
 ```
 
+```{r}
+#Train-test splitting of dataset to check model accuracy
+library(caret)
+partition <- createDataPartition(y =listings_log$price_4_nights_log, p = 0.8, list = F)
+trainingdata = listings_log[partition, ]
+test <- listings_log[-partition, ]
+```
+
+```{r}
+library(kableExtra)
+p <- predict(final_model, trainingdata)
+error <- (p- trainingdata$price_4_nights_log)
+RMSE_Model <- sqrt(mean(error^2,na.rm=TRUE))
+
+RMSE_Model
+
+ptest <- predict(final_model, test)
+error1 <- (ptest- test$price_4_nights_log)
+RMSE_NewData <- sqrt(mean(error1^2,na.rm=TRUE))
+
+Method <- c("Train/Test Split")
+ModelRMSE <- c(RMSE_Model)
+RMSENewData <- c(RMSE_NewData)
+
+table1 <- data.frame(Method, ModelRMSE, RMSENewData)
+
+kable(table1) %>% kable_styling(c("striped", "bordered")) %>%column_spec(2:3, border_left = T)
+```
+
+
+```{r}
+
+```
 
 To DO
 - select relevant variables
