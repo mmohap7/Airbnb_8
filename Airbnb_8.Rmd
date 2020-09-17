@@ -213,9 +213,12 @@ skim(listings_clean)
 
 Now that the data is clean, a selection of useful data has been made, and filtered to only feature our criteria for a short stay holiday listing, visualisations of data can be made. This lays the foundation of any correlations and questions the regression model will have to explain and answer.
 
-First of all, we made a map with clusters of listings. This shows us where the listings in Copenhagen are and the concentration of listings. The reason we chose clusters instead of points, is that clusters made it easier to read and interpret.
 
-```{r, echo=FALSE}
+###location
+
+In order to get an idea on the concentration of apartment listings in the area of Copenhagen, we plotted a map showing the number of flat available for rent for 4 nights or less. We used clusters instead of point to make the map more readable and to get a better idea of the number of listings in each area.
+
+```{r mapping clusters, echo=FALSE}
 #Taking the filtered listings with a min of 4 nights and create a map of the apartments in Copenhagen
 listings_filtered_4nights %>% 
 leaflet() %>% 
@@ -231,59 +234,11 @@ leaflet() %>%
                   )
   
 ```
+The map shows the number of available flats are located in the city center. The more we get away from the center the fewer the number of flats available.
 
+To gauge the price difference in each area in Copenhagen, we plotted a heatmap showing the more expensive areas in a brighter red colour. Also we plotted a bar chart to get an idea of the median price for each area. The reason for using median over mean is because the listings in Copenhagen have very extreme values and they skew the mean too much for certain areas.
 
-
-```{r}
-#Calculated median price per night for each property type
-average_per_proptype <- listings_filtered_4nights %>% 
-  group_by(prop_type_simplified) %>% 
-  summarise(median_price = median(price))
-#Plotted a bar chart with median price per night for each property type
-average_per_proptype %>% 
-  ggplot(aes(
-    x = reorder(prop_type_simplified, desc(median_price)),
-    y = median_price
-  )) +
-  geom_col() +
-  labs(
-    title = "Median price per night per property type",
-    x = "",
-    y = "Median price per night",
-    caption = "Source: AirBnB"
-  ) +
- theme_tech(theme = "airbnb") +
-  scale_color_tech(theme="airbnb")
-
-#Calculated median price per night for each room type
-median_per_roomtype <- listings_filtered_4nights %>% 
-  group_by(room_type) %>% 
-  summarise(median_price = median(price))
-#Price per night for each room type
-median_per_roomtype %>% 
-  ggplot(aes(
-    x = reorder(room_type, desc(median_price)),
-    y = median_price
-  )) +
-  geom_col() +
-  labs(
-    title = "Median price per night per room type",
-    x = "",
-    y = "Median price per night",
-    caption = "Source: AirBnB"
-  )
-
-listings<-listings%>%
-  filter(minimum_nights == 4)
-listings_matrix<- listings %>%
-  select(price, square_feet ,bedrooms, bathrooms) 
-ggpairs(listings_matrix, columns = 1:4)
-
-```
-
-
-
-```{r}
+```{r heatmap of price}
 #maps price to seven colors using quantiles
 qpal <- colorQuantile("Reds", listings_filtered_4nights$price, n = 7)
 
@@ -298,6 +253,129 @@ leaflet() %>%
                    label = ~property_type,
                    color = ~qpal(price))
 ```
+We can conclude that the harbour area in Copehagen has the most expensive listings. Therefore we suspect that location will have a high coefficient when we will be running te regression models.
+
+
+```{r neighborhood bar chart}
+
+#Calculated median price per night for each neighborhood
+median_per_neighborhood <- listings_filtered_4nights %>% 
+  group_by(neighbourhood_cleansed) %>% 
+  summarise(median_price = median(price))
+#Price per night for each neighborhood
+median_per_neighborhood %>% 
+  ggplot(aes(
+    x = reorder(neighbourhood_cleansed, median_price),
+    y = median_price
+  )) +
+  geom_col() +
+  labs(
+    title = "Median price per night per neighborhood",
+    x = "",
+    y = "Median price per neighborhood",
+    caption = "Source: AirBnB"
+  ) +
+  coord_flip() +
+  NULL
+
+```
+The Indre By area in Copenhagen is the central harbour area and is the most expensive area for AirBnB prices. This confirms that the neighborhood variable will have a significant impact on the price variable.
+
+
+###accommodation type
+
+Next up, we have plotted a number of bar charts to display the price relationship with the types of accommodation.
+
+Median price per night per property type:
+The histogram showed that among all the property types, the lowest median price per night is allocated to the appartments
+
+Median price per room type:
+The histogram showed that hotel rooms are generally more expensive than the other types of rooms available.
+
+```{r median prices accommodation types}
+
+#Calculated median price per night for each property type
+average_per_proptype <- listings_filtered_4nights %>% 
+  group_by(prop_type_simplified) %>% 
+  summarise(median_price = median(price))
+
+#Plotted a bar chart with median price per night for each property type
+average_per_proptype %>% 
+  ggplot(aes(
+    x = reorder(prop_type_simplified, desc(median_price)),
+    y = median_price
+  )) +
+  geom_col() +
+  labs(
+    title = "Median price per night per property type",
+    x = "",
+    y = "Median price per night",
+    caption = "Source: AirBnB"
+  ) +
+  NULL
+
+#Calculated median price per night for each room type
+median_per_roomtype <- listings_filtered_4nights %>% 
+  group_by(room_type) %>% 
+  summarise(median_price = median(price))
+
+#Price per night for each room type
+median_per_roomtype %>% 
+  ggplot(aes(
+    x = reorder(room_type, desc(median_price)),
+    y = median_price
+  )) +
+  geom_col() +
+  labs(
+    title = "Median price per night per room type",
+    x = "",
+    y = "Median price per night",
+    caption = "Source: AirBnB"
+  ) +
+  NULL
+
+```
+
+From this we can conclude that both room type and property type have an influence on the price.
+
+
+###rating
+
+Following from this, we wanted to know what influence rating has on the price. For this we used both data on the review scores and whether the listing is posted by a superhost.
+
+```{r}
+
+listings_clean %>%
+  ggplot(aes(
+    x = log(price),
+    colour = !is.na(host_is_superhost)
+  )) +
+  geom_density() +
+  NULL
+
+
+listings_clean %>%
+  filter(!is.na(host_is_superhost)) %>% 
+  ggplot(aes(
+    x = review_scores_rating,
+    fill = host_is_superhost
+  )) +
+  geom_histogram(binwidth = 5) +
+  NULL
+
+
+```
+
+###GGpairs
+
+```{r}
+
+listings_clean %>% 
+  ggpairs()
+
+```
+
+
 
 # REGRESSION
 
