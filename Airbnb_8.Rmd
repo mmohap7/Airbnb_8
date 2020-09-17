@@ -34,9 +34,9 @@ library(kableExtra)
 
 ```
 
-#Introduction
+# Introduction
 
-Copenhagen, the happiest city in the world, Who doesn't want to go there! Happiness comes at a price though, you'll need to find a place to stay. What better way to look for a place to stay than on AirBnB and us being students, want to go there when the prices are cheapest. This is where the MAM program from LBS is already paying itself off. To find out what variables (e.g. room type, property type) influence the price most and to predict when is best to go, we're running a regression analysis. So our dream holiday can become reality.
+Copenhagen, the happiest city in the world, Who doesn't want to go there! Happiness comes at a price though, you'll need to find a place to stay. What better way to look for a place to stay than on AirBnB and us being students, would like to know what this will cost us. This is where the MAM program from LBS is already paying itself off. To find out what variables (e.g. room type, property type) influence the price most so we can predict the cost with a regression analysis. So our dream holiday can become reality.
 
 The data we will be using for this comes directly from AirBnB. In this analysis we will only be using data on the city of Copenhagen. the data shows the listings as per June 26th 2020.
 
@@ -47,14 +47,27 @@ This analysis is divided into 4 parts:
 1.    Regression analysis
 1.    Conclusion
 
-#Executive summary
+# Executive summary
 
-to be filled in after conclusion.
+Using AirBnB data for listings at the time of June 26th 2020, we predicted the costs of a stay in Copenhagen. The requirements were 4 nights with 2 persons, a private room and a minimum review score of 90 with at least 10 reviews. Our method was to run and exploratory data analysis to set the scene for the data that we would use to make our prediction. Once we had confirmed the important values that could have a significant influence on the price. we identified the following variables:
 
-#Exploratory data analysis
+-   property type
+-   number of reviews
+-   review score
+-   room type
+-   bathrooms
+-   bedrooms
+-   accommodates
+-   neighborhood
+-   cancellation policy
+-   Superhost
+
+After running regression models with these variables we came to a model that had the most prediction power, model 7. With the specified criteria we made a prediction with 95% confidence that the cost for a median listing on Airbnb in Copenhagen is between 1,860.18 USD and 1,938.58 USD.
+             
+# Exploratory data analysis
 To get an idea of the data structure, an exploratory data analysis is conducted. The first steps are to look at the raw values and to clean the data afterwards. This gives a foundation to use in summary statistics. Finally, visualisations will give an impression of any correlations in variables and will give an outlook on variables that stand out.
 
-##Looking at the raw values
+## Looking at the raw values
 
 First of all, the data needs to be loaded. The clean_names() function is used to make the values consistent and neat, to help with the data wrangling.
 
@@ -89,8 +102,6 @@ Having looked at the data, the following variables will be of importance through
 
 1.    neighborhood*: three variables on a few major neighborhoods in each city
 
-*add any variables we are using to this list*
-
 
 The next step is to check the data for the properties of the variables and if there are any missing or NA values that need to be addressed.
 
@@ -109,7 +120,7 @@ skim(listings) %>%
 From this list can be concluded that there are 28,523 values for 106 variables. there are a couple of values that contain NA, 1 of them, cleaning_fee, stands out and is one of the variables that was flagged as important in this analysis. This will be addressed in the next section. Other variables that stand out are price, cleaning_fee and extra_people. these variables are stored as character values and need to have the $-sign removed to be stored as a numeric value. Since these variables will be used further in the analyis, this also will be resolved in the next section where we clean the data and run summary statistics.
 
 
-##Computing summary statistics of the variables of interest
+## Computing summary statistics of the variables of interest
 
 In this section we will clean the data and run summary statistics that will be visualised in the next section. First the values stored as characters are converted to numeric values and the $-sign removed.
 
@@ -218,11 +229,11 @@ skim(listings_clean)
 ```
 
 
-##Visualisations
+## Visualisations
 
 Now that the data is clean, a selection of useful data has been made, and filtered to only feature our criteria for a short stay holiday listing, visualisations of data can be made. This lays the foundation of any correlations and questions the regression model will have to explain and answer.
 
-###location
+### location
 
 In order to get an idea on the concentration of apartment listings in the area of Copenhagen, we plotted a map showing the number of flat available for rent for 4 nights or less. We used clusters instead of point to make the map more readable and to get a better idea of the number of listings in each area.
 
@@ -291,7 +302,7 @@ median_per_neighborhood %>%
 The Indre By area in Copenhagen is the central harbour area and is the most expensive area for AirBnB prices. This confirms that the neighborhood variable will have a significant impact on the price variable.
 
 
-###accommodation type
+### accommodation type
 
 Next up, we have plotted a number of bar charts to display the price relationship with the types of accommodation.
 
@@ -348,11 +359,11 @@ median_per_roomtype %>%
 From this we can conclude that both room type and property type have an influence on the price.
 
 
-###rating
+### rating
 
 Following from this, we wanted to know what influence rating has on the price. For this we used both data on the review scores and whether the listing is posted by a superhost.
 
-```{r rating plots}
+```{r rating plots, message = false}
 
 #Plotted a density graph to display the relationship with price in being a superhost
 listings_clean %>%
@@ -411,7 +422,7 @@ listings_clean %>%
 ```
 From this we can conclude that being a superhost does have an influence on the price. People would prefer a superhost, so it seems logical that the average price for a superhost is higher than a listing under a normal host. The ratings however don't seem to be related to being a superhost. In fact the perfect scores are more among non-superhosts. This could be because of the higher expectations set by booking via a superhost, this could make guests more critical when writing a review. finally, there does not seem to be a strong correlation with a rating score and the price. Hosts will not alter their prices to their review scores.
 
-###GGpairs
+### GGpairs
 
 To display a comprehensive overview of the correlation between variables and the price we plotted a GGpairs plot. Using all the selected variables.
 ```{r ggpairs plot, message = FALSE}
@@ -419,7 +430,7 @@ To display a comprehensive overview of the correlation between variables and the
 # Display the correlation between four important variables
 
 listings_clean %>%
-  select(price, room_type, prop_type_simplified, number_of_reviews, review_scores_rating, host_is_superhost) %>% 
+  select(price, review_scores_rating, bedrooms, bathrooms, accommodates) %>% 
   ggpairs(cardinality_threshold=NULL)
 
 ```
@@ -445,7 +456,7 @@ listings_new <- listings_clean %>%
 ```
 
 The following plots show the density for the total price for 4 nights wjth and without a log function.
-```{r density plot price,fig.width=20}
+```{r density plot price,fig.width=20, message= FALSE}
 
 # Density plots for price_4_nights
 density.default(listings_new$price_4_nights)
@@ -830,6 +841,7 @@ Model 7 is the best model with the highest R2 so this will be the final model.
 
 
 ## Final model 
+Let's print the final model (no. 7).
 ```{r final model}
 
 final_model <- lm(price_4_nights_log ~
@@ -886,6 +898,8 @@ model_predictions <- model_predictions_log  %>%
 
 ```
 
+Next we visualise the data to have a better understanding of the structure.
+
 ```{r graph-predictions, warning=FALSE}
 
 # Change order of property types to have other in the end
@@ -927,6 +941,7 @@ ggplot(model_predictions, aes(x = fitted_price_final)) +
 
 
 ```
+
 ```{r training and testing}
 
 # Splitting data in training and testing sets
@@ -986,6 +1001,7 @@ print(predicted_value$lower_final) + print(predicted_value$fitted_price_final) +
 =======
 # locate the median value property
 predicted_value <- model_predictions %>%
+  filter(fitted_price_final == median(fitted_price_final, na.rm = TRUE))
   filter(fitted_price_final <= median(fitted_price_final, na.rm = TRUE), 
          fitted_price_final >= median(fitted_price_final, na.rm = TRUE))
 
@@ -996,3 +1012,6 @@ predicted_value %>%
 predicted_value[, 29:31] 
 
 ```
+
+# Conclusion
+To conclude, we can predict, with 95% confidence, that a median listing on AirBnB in Copenhagen, for 2 people and 4 nights, will cost between 1,860.18 USD and 1,938.58 USD.
