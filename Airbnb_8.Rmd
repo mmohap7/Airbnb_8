@@ -58,7 +58,9 @@ To get an idea of the data structure, an exploratory data analysis is conducted.
 First of all, the data needs to be loaded. The clean_names() function is used to make the values consistent and neat, to help with the data wrangling.
 
 ```{r cars, cache=TRUE}
+
 listings <- vroom("http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/listings.csv.gz") %>%
+  
     # Get the listings for Copenhagen
     clean_names()  
 ```
@@ -91,22 +93,18 @@ Having looked at the data, the following variables will be of importance through
 The next step is to check the data for the properties of the variables and if there are any missing or NA values that need to be addressed.
 
 ```{r, exploration, echo=FALSE, cache=TRUE}
-<<<<<<< HEAD
-# look at the raw values
+
+# Look at the raw values
 glimpse(listings)
 
-# compute summary statistics of the variables of interest, or find NAs
+# Compute summary statistics of the variables of interest, or find NAs
 skim(listings) 
-=======
 
-#Get an overview of the size of the data and the variables
+# Get an overview of the size of the data and the variables
 glimpse(listings) 
 
-
-#Create an overview of the variables and their distribution, while checking for any missing or NA values
+# Create an overview of the variables and their distribution, while checking for any missing or NA values
 skim(listings)
-
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 ```
 
 From this list can be concluded that there are 28,523 values for 106 variables. there are a couple of values that contain NA, 1 of them, cleaning_fee, stands out and is one of the variables that was flagged as important in this analysis. This will be addressed in the next section. Other variables that stand out are price, cleaning_fee and extra_people. these variables are stored as character values and need to have the $-sign removed to be stored as a numeric value. Since these variables will be used further in the analyis, this also will be resolved in the next section where we clean the data and run summary statistics.
@@ -115,95 +113,63 @@ From this list can be concluded that there are 28,523 values for 106 variables. 
 ##Computing summary statistics of the variables of interest
 
 
-<<<<<<< HEAD
-```{r cleaning data,echo=FALSE}
+```{r cleaning data stored as character}
+
 # Make price into a numeric variable
-listings$price = as.numeric(gsub("[\\$,]", "", listings$price))
+listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) 
 
 # Make cleaning fee into a numeric variable
-listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee))
+listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee)) 
 
 # Make extra people a numeric variable
 listings$extra_people = as.numeric(gsub("[\\$,]", "", listings$extra_people))
 
-# Change NA cleaning fee values to 0, assuming that 0 is meant for NA
-=======
-In this section we will clean the data and run summary statistics that will be visualised in the next section. First the values stored as characters are converted to numeric values and the $-sign removed.
-
-```{r cleaning data stored as character}
-
-# make price into a numeric variable
-listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) 
-
-# make cleaning fee into a numeric variable
-listings$cleaning_fee = as.numeric(gsub("[\\$,]", "", listings$cleaning_fee)) 
-
-# make extra people a numeric variable
-listings$extra_people = as.numeric(gsub("[\\$,]", "", listings$extra_people))
-
 ```
-
 
 Following this, the NA's in the cleaning_fee values will be converted to zero. Assuming the NA's are from hosts not providing an input for cleaning fees, the NA's should equal zero.
 
 ```{r cleaning data by reducing the NA's}
 
-#Changes NA cleaning fee values to 0, because assuming that 0 is meant for NA
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
+#Changes NA cleaning fee values to 0, assuming that 0 is meant for NA
 listings <- listings %>%   
   mutate(cleaning_fee = case_when(
     is.na(cleaning_fee) ~ 0, 
     TRUE ~ cleaning_fee
   ))
 
-<<<<<<< HEAD
-# Create a list of property types and the count
-listings %>% 
-  group_by(property_type) %>%
-  summarise(count= n()) %>%
-  arrange(desc(count))
-
-# Take top 4 property_type and creat a new column and assigning property_type in groups
-=======
 ```
 
 The property type categorical variables has too many categories to be summarised. To reduce this, the 4 most substantial categories have been specified, the remainder will be classed as other.
 
 ```{r cleaning data by reducing property type criteria}
 
-#create a list of property types and the count
+# Create a list of property types and the count
 listings%>% 
   group_by(property_type)%>%
   summarise(count= n())%>%
   arrange(desc(count))
 
-#Taking top 4 property_type and creating a new column and assigning property_type in groups
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
+# Take top 4 property_type and create a new column and assigning property_type in groups
 listings <- listings %>%
   mutate(prop_type_simplified = case_when(
     property_type %in% c("Apartment","Condominium", "House","Townhouse") ~ property_type, 
     TRUE ~ "Other"
   ))
 
-<<<<<<< HEAD
 # Check if all the variables are in the correct type
 skim(listings) 
-=======
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
+
 ```
 
 To only have a list of variables that will be used in the analysis, redundant variables are filtered out. As the analysis focuses on short holiday stays, the long stay listings need to be removed from the list. By looking at the minimum nights on the listings, it can be determined if these addresses are viable for short stays.
 
 ```{r filtering, echo=FALSE}
-<<<<<<< HEAD
+
 # Display table with the count in descending order for the minimum nights
 listings %>%     
   group_by(minimum_nights) %>%
   summarise(count= n()) %>%
   arrange(desc(count))
-
-# Filter the AirBnB data so that it only includes observations less than or equal to 4
-=======
 
 #displaying table with the count in descending order for the minimum nights
 listings%>%     
@@ -215,12 +181,11 @@ listings%>%
 In this summary it can be seen that after 5 minimum days the numbers of listing drop significantly.The majority of listings are within the 1 to 4 minimum days stay. Therefore this will give a good indication of the listings intended for short, holiday, stays. In the next section the data is filtered to only feature a minimum of 4 nights or less. Also, the variables that will be used in the analysis are selected, so to only have relevant variables left to make the analysis more concise and clear.
 
 ```{r filtering, echo=FALSE}
-#Filtering the airBnB data so that it only includes observations less than or equal to 4
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
+# Filter the AirBnB data so that it only includes observations less than or equal to 4
 listings_filtered_4nights <- listings %>%
   filter(minimum_nights <= 4)
 
-#Selecting the variables that will be used in the analysis as to remove the redundant variables.
+# Select the variables that will be used in the analysis as to remove the redundant variables
 listings_clean <- listings %>%
   select(id, 
          listing_url, 
@@ -250,7 +215,7 @@ Let's have a look at the data.
 
 ```{r skim the new list}
 
-#check if all the variables are in the correct type
+# Check if all the variables are in the correct type
 skim(listings_clean) 
 
 ```
@@ -263,6 +228,7 @@ Now that the data is clean, a selection of useful data has been made, and filter
 First of all, we made a map with clusters of listings. This shows us where the listings in Copenhagen are and the concentration of listings. The reason we chose clusters instead of points, is that clusters made it easier to read and interpret.
 
 ```{r, echo=FALSE}
+
 # Take the filtered listings with a min of 4 nights and create a map of the apartments in Copenhagen
 listings_filtered_4nights %>% 
   leaflet() %>% 
@@ -282,6 +248,7 @@ listings_filtered_4nights %>%
 
 
 ```{r}
+
 # Calculate median price per night for each property type
 average_per_proptype <- listings_filtered_4nights %>% 
   group_by(prop_type_simplified) %>% 
@@ -299,17 +266,11 @@ average_per_proptype %>%
     x = "",
     y = "Median price per night",
     caption = "Source: AirBnB"
-<<<<<<< HEAD
-  )
-
-# Calculate median price per night for each room type
-=======
   ) +
  theme_tech(theme = "airbnb") +
   scale_color_tech(theme="airbnb")
 
-#Calculated median price per night for each room type
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
+# Calculate median price per night for each room type
 median_per_roomtype <- listings_filtered_4nights %>% 
   group_by(room_type) %>% 
   summarise(median_price = median(price))
@@ -328,19 +289,15 @@ median_per_roomtype %>%
     caption = "Source: AirBnB"
   )
 
-<<<<<<< HEAD
 # Display the correlation between four important variables
-listings_matrix <- listings_filtered_4nights %>%
-  select(price, square_feet, bedrooms, bathrooms) 
-  ggpairs(listings_matrix, columns = 1:4)
-=======
-listings<-listings%>%
+listings<-listings %>%
   filter(minimum_nights == 4)
-listings_matrix<- listings %>%
-  select(price, square_feet ,bedrooms, bathrooms) 
+
+listings_matrix <- listings %>%
+  select(price, square_feet ,bedrooms, bathrooms)
+
 ggpairs(listings_matrix, columns = 1:4)
 
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 ```
 
 
@@ -424,22 +381,18 @@ listings_log <- listings_new %>%
   
 # Create model1 of price_4_nights with explanatory variables prop_type_simplified, number_of_reviews and review_scores_ratings
 model1 <- lm(price_4_nights_log ~
-              prop_type_simplified +
-              number_of_reviews +
-<<<<<<< HEAD
-              review_scores_rating +
-             NULL,
-            data = listings_log
-            )
-=======
-              review_scores_rating,
-            data = listings_log)
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
+             prop_type_simplified +
+             number_of_reviews +
+             review_scores_rating,
+             data = listings_log
+             )
+
 model1 %>% tidy(conf.int=TRUE)
 model1 %>% glance()
 
 # Check residuals
 autoplot(model1)
+
 ``` 
 
 Interpretation of review_scores_rating predictor:
@@ -463,24 +416,16 @@ model2 <- lm(price_4_nights_log ~
              prop_type_simplified +
              number_of_reviews +
              review_scores_rating +
-<<<<<<< HEAD
-             room_type +
-             NULL, 
-            data = listings_log
-            )
+             room_type, 
+             data = listings_log
+             )
+
 model2 %>% tidy(conf.int=TRUE)
 model2 %>% glance()
 
 # Check residuals
-=======
-             room_type, 
-            data = listings_log)
-model2 %>% tidy(conf.int=TRUE)
-model2 %>% glance()
-
-# check residuals
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 autoplot(model2)
+
 ```
 
 Interpretation of room_type predictor:
@@ -507,14 +452,9 @@ model3a<-lm(price_4_nights_log ~
              bathrooms +
              bedrooms +
              beds + 
-<<<<<<< HEAD
-             accommodates,
-            data = listings_log
-            )
-=======
              accommodates, 
             data = listings_log)
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
+
 model3a %>% 
   tidy(conf.int=TRUE)
 model3a %>%
@@ -533,22 +473,18 @@ Interpretation of bathrooms, bedrooms, beds, and size of the house (accommodates
 There might be a problem with multi-collinearity since intuitively the number of bathrooms and bedrooms should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceptable range.
 
 ```{r model3}
-<<<<<<< HEAD
-# Create model3 by removing prop_type from model3a 
-model3 <- lm(price_4_nights_log ~
-=======
-# create model3 by removing beds from model3a 
+# Create model3 by removing beds from model3a 
 model3<-lm(price_4_nights_log ~
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
-             prop_type_simplified +
-             number_of_reviews +
-             review_scores_rating +
-             room_type + 
-             bathrooms +
-             bedrooms +
-             accommodates, 
-            data = listings_log
-            )
+           prop_type_simplified +
+           number_of_reviews +
+           review_scores_rating +
+           room_type + 
+           bathrooms +
+           bedrooms +
+           accommodates, 
+           data = listings_log
+           )
+
 model3 %>% tidy(conf.int=TRUE)
 model3 %>% glance()
 
@@ -582,11 +518,8 @@ model4<-lm(price_4_nights_log ~
 model4 %>% tidy(conf.int=TRUE)
 model4 %>% glance()
 
-<<<<<<< HEAD
+
 # Test VIF
-=======
-# test VIF
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 car::vif(model4)
 
 # Check residuals
@@ -613,11 +546,7 @@ model4b<-lm(price_4_nights_log ~
 model4b %>% tidy(conf.int=TRUE)
 model4b %>% glance()
 
-<<<<<<< HEAD
 # Test VIF
-=======
-# test VIF
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 car::vif(model4b)
 
 # Check residuals
@@ -651,11 +580,7 @@ model5<-lm(price_4_nights_log ~
 model5 %>% tidy(conf.int=TRUE)
 model5 %>% glance()
 
-<<<<<<< HEAD
 # Test VIF
-=======
-# test VIF
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 car::vif(model5)
 
 # Check residuals
@@ -713,11 +638,7 @@ model6<-lm(price_4_nights_log ~
 model6 %>% tidy(conf.int=TRUE)
 model6 %>% glance()
 
-<<<<<<< HEAD
 # Test VIF
-=======
-# test VIF
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 car::vif(model6)
 
 # Check residuals
@@ -754,11 +675,7 @@ model7<-lm(price_4_nights_log ~
 model7 %>% tidy(conf.int=TRUE)
 model7 %>% glance()
 
-<<<<<<< HEAD
 # Test VIF
-=======
-# test VIF
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 car::vif(model7)
 
 # Check residuals
@@ -802,24 +719,18 @@ Model 7 is the best model with the highest R2 so this will be the final model.
 ## Final model 
 ```{r final model}
 final_model <- lm(price_4_nights_log ~
-             prop_type_simplified +
-             number_of_reviews +
-             review_scores_rating +
-             room_type +
-             bathrooms +
-             bedrooms +
-             accommodates +
-             neighbourhood_simplified +
-<<<<<<< HEAD
-             cancellation_policy +
-             NULL,
-             data = listings_log
-             )
+                  prop_type_simplified +
+                  number_of_reviews +
+                  review_scores_rating +
+                  room_type +
+                  bathrooms +
+                  bedrooms +
+                  accommodates +
+                  neighbourhood_simplified +
+                  cancellation_policy,
+                  data = listings_log
+                  )
 
-=======
-             cancellation_policy,
-             data = listings_log)
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 mosaic::msummary(final_model)
 get_regression_table(final_model)
 get_regression_summaries(final_model)
@@ -842,29 +753,13 @@ listings_predict_log <- listings_log %>%
 
 listings_predict_log
 
-<<<<<<< HEAD
-# # Generate a prediction for each row
-# predict(final_model, newdata = listings_predict_log, interval = "prediction")
-# 
-# # Generate a prediction for each row with broom 
-# model_predictions_log <- broom::augment(final_model, 
-#                              newdata = listings_predict_log)
-# 
-# 
-# 
-# model_predictions
-
-# Augment the model
-model_final_augment <- augment(final_model)
-=======
-# generate a prediction for each row
+# Generate a prediction for each row
 model_predictions_log_CI <- predict(final_model, newdata = listings_predict_log, interval = "confidence")
 model_predictions_log_CI
 
-# generate a prediction for each row with broom
+# Generate a prediction for each row with broom
 model_predictions_log <- broom::augment(final_model,
                              newdata = listings_predict_log, se_fit = TRUE)
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 
 model_predictions_log
 
@@ -872,56 +767,38 @@ model_predictions_log
 # 
 # model_predictions_aug
 
-<<<<<<< HEAD
 # Convert prices back from log
-model_predictions <- model_final_augment %>%
-  mutate(fitted_price_final = 10^(.fitted))
-=======
-# convert prices back from log
 model_predictions <- model_predictions_log  %>%
   mutate(lower = .fitted - 1.96 * .se.fit, 
          upper = .fitted + 1.96 * .se.fit) %>%
   mutate(fitted_price_final = 10^(.fitted),
          upper_final = 10^(upper),
          lower_final = 10^(lower))
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 
 model_predictions
 ```
 
 ```{r graph-predictions, warning=FALSE}
-<<<<<<< HEAD
-# Graph distribution of fitted values and converting the log values back to normal dollar prices 
-=======
-# change order of property types to have other in the end
+
+# Change order of property types to have other in the end
 model_predictions$prop_type_simplified <- factor(model_predictions$prop_type_simplified, c("Apartment", "Condominium", "House", "Townhouse", "Other"))
 
-# graph distribution of fitted values  
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
+# Graph distribution of fitted values  
 ggplot(model_predictions, aes(x = fitted_price_final)) +
   geom_density() +
   labs(y = "",
        x = "Price of an AirBnB in Copenhagen") +
   theme_bw()
 
-<<<<<<< HEAD
 # Facet by neighbourhood
-=======
-# facet by neighbourhood
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 ggplot(model_predictions, aes(x = fitted_price_final)) +
   geom_density() +
   labs(y = "",
        x = "Price of an AirBnB in Copenhagen") +
   facet_wrap(~neighbourhood_simplified) +
   theme_bw()
-<<<<<<< HEAD
 
 # Facet by prop_type_simplified
-=======
-  
-# facet by prop_type_simplified
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 ggplot(model_predictions, aes(x = fitted_price_final)) +
   geom_density() +
   labs(y = "",
@@ -929,11 +806,7 @@ ggplot(model_predictions, aes(x = fitted_price_final)) +
   facet_wrap(~prop_type_simplified) +
   theme_bw()
 
-<<<<<<< HEAD
 # Facet by neighbourhood & prop_type_simplified
-=======
-# facet by neighbourhood & prop_type_simplified
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
 ggplot(model_predictions, aes(x = fitted_price_final)) +
   geom_density() +
   labs(y = "",
@@ -943,23 +816,23 @@ ggplot(model_predictions, aes(x = fitted_price_final)) +
 ```
 
 ```{r}
+
 # Find mean and median of the fitted prices
 model_predictions %>%
-  summarize(mean_price = mean(fitted_price_final, na.rm=TRUE), median_price = median(fitted_price_final, na.rm=TRUE))
+  summarize(mean_price = mean(fitted_price_final, na.rm = TRUE), 
+            median_price = median(fitted_price_final, na.rm = TRUE)
+            )
+
 ```
 
 > As the price distribution is **right skewed**, choosing mean as measure to predict the final price wouldn't be economical so we've decided to use the median because it fits our budget.
 
 ```{r}
-<<<<<<< HEAD
+
 # Locate the median value property
-predicted_value<-listings_predict_log %>%
-  filter(fitted_price_final == median(fitted_price_final))
-=======
-# locate the median value property
 predicted_value <- model_predictions %>%
-  filter(fitted_price_final == median(fitted_price_final, na.rm=TRUE))
->>>>>>> a5ab433266bf3151f09fccfb23f7d38de0d6ffde
+  filter(fitted_price_final == median(fitted_price_final, na.rm = TRUE))
+
 predicted_value
 
 
