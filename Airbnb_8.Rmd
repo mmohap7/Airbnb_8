@@ -429,6 +429,12 @@ Answer: we should use variable log(price_4_nights). Looking at the density plots
 price_4_nights and log(price_4_nights), we can see clearly that log(price_4_nights) is more close to a normal distribution, while most values in price_4_nights are cramped within a very small range.
 
 
+### Model 0
+```{r}
+
+```
+
+
 ### Model 1
 
 Fitting a regression model called model1 with the following explanatory variables: prop_type_simplified, number_of_reviews, and review_scores_rating
@@ -442,8 +448,7 @@ listings_log <- listings_new %>%
 model1<-lm(price_4_nights_log ~
               prop_type_simplified +
               number_of_reviews +
-              review_scores_rating +
-             NULL,
+              review_scores_rating,
             data = listings_log)
 model1 %>% tidy(conf.int=TRUE)
 model1 %>% glance()
@@ -457,7 +462,7 @@ Interpretation of review_scores_rating predictor:
 
 Interpretation of prop_type_simplified predictor:
 
-> Property type (prop_type_simplified) is a significant predictor. Controlling for other variables, switching property type from apartment to condomunium would result in 0.034 increase in log10(price_4_nights). Similarly, switching property type from apartment to house would result in 0.11 increase in log10(price_4_nights); switching property type from apartment to townhouse would result in 0.17 increase in log10(price_4_nights); switching property type from apartment to property types other than the aforementioned 3 types would result in an average of 0.18 increase in log10(price_4_nights)
+> Property type (prop_type_simplified) is a significant predictor. Controlling for other variables, switching property type from apartment to condomunium would result in 0.034 increase in log10(price_4_nights). Similarly, switching property type from apartment to house would result in 0.11 increase in log10(price_4_nights); switching property type from apartment to townhouse would result in 0.17 increase in log10(price_4_nights); switching property type from apartment to property types other than the aforementioned 3 types would result in an average of 0.18 increase in log10(price_4_nights).
 
 
 #### Model 1: 4%
@@ -527,6 +532,7 @@ Interpretation of bathrooms, bedrooms, beds, and size of the house (accommodates
 > The number of bathrooms, bedrooms and size of the house (accommodates) are  significant predictors of log10(price_4_nights) and are all positively related with price_4_nights, while number of beds is not a significant predictor. Coefficients show that each additional bathroom is associated with 0.06 increase in log10(price_4_nights); each additional bedroom is associated with 0.05 increase in log10(price_4_nights).
 There might be a problem with multi-collinearity since intuitively the number of bathrooms and bedrooms should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceptable range.
 
+check later
 ```{r model3}
 # create model3 by removing prop_type from model3a 
 model3<-lm(price_4_nights_log ~
@@ -646,6 +652,7 @@ Interpretation of exact location variable:
 =======
 > A listing’s exact location variable has a p value of 0.34, and therefore is not a significant predictor of price_4_nights. Thus, we will not include it in the following models.
 
+
 #### Model 4: 41% 
 
 
@@ -714,6 +721,7 @@ Interpretation of neighbourhood predictor:
 ### Model 7
 
 What is the effect of cancellation_policy on price_4_nights, after we control for other variables?
+
 ```{r model7}
 <<<<<<< HEAD
 
@@ -909,6 +917,11 @@ model_predictions %>%
 ```{r}
 # locate the median value property
 <<<<<<< HEAD
+# predicted_value<-listings_predict_log %>%
+#   filter(fitted_price_final == median(fitted_price_final))
+# predicted_value
+=======
+<<<<<<< HEAD
 predicted_value<-listings_predict %>%
   filter(price_final == median(price_final))
 predicted_value
@@ -918,6 +931,7 @@ predicted_value
 predicted_value<-listings_predict_log %>%
   filter(fitted_price_final == median(fitted_price_final))
 predicted_value
+>>>>>>> 654718adb82d02f1876d33dbf503cf013a573df2
 ```
 
 >>>>>>> 088d167584cf6d5241d6d30933b6ace5448678f3
