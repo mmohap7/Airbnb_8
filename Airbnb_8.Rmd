@@ -570,6 +570,7 @@ model5<-lm(price_4_nights_log ~
              bathrooms +
              bedrooms +
              accommodates +
+             host_is_superhost +
              is_location_exact,
              data = listings_log
            )
