@@ -634,20 +634,21 @@ autoplot(model4)
 
 Interpretation of superhost predictor:
 
-Since the p-value for the estimate of the superhost coefficient is  significant (with a p-value of 0.36 and a t-statistic of 0.9), it seems that superhosts do command a price premium from their guests in Copenhagen. Compared to non-superhost, being a superhost is associated with 0.03 increase in log10(price_4_nights).
+Since the p-value for the estimate of the superhost coefficient is  significant (with a p-value of 0.36 and a t-statistic of 0.9), it seems that superhosts do command a price premium from their guests in Copenhagen. Compared to non-superhost, being a superhost is associated with 0.04 increase in log10(price_4_nights).
 
 ```{r model4b}
 # Create model4b by adding host_is_superhost to model4 and create an interaction variable 
 model4b<-lm(price_4_nights_log ~
-              prop_type_simplified +
+            prop_type_simplified +
              number_of_reviews +
              review_scores_rating +
              room_type + 
              bathrooms +
              bedrooms +
              accommodates +
+             host_is_superhost +
              host_is_superhost*review_scores_rating,
-            data = listings_log
+             data = listings_log
             )
 model4b %>% tidy(conf.int=TRUE)
 model4b %>% glance()
@@ -682,7 +683,6 @@ model5<-lm(price_4_nights_log ~
              accommodates +
              host_is_superhost +
              is_location_exact,
-             is_location_exact+
              data = listings_log
            )
 model5 %>% tidy(conf.int=TRUE)
@@ -975,11 +975,15 @@ As the price distribution is **right skewed**, choosing mean as measure to predi
 
 ```{r}
 
-# Locate the median value property
+# locate the median value property and since there is an even number of observations, there are two median properties, which is why we add a small margin of error (0.1) to locate these properties 
 predicted_value <- model_predictions %>%
-  filter(fitted_price_final == median(fitted_price_final, na.rm = TRUE))
+  filter(fitted_price_final <= median(fitted_price_final, na.rm = TRUE)+0.1, 
+         fitted_price_final >= median(fitted_price_final, na.rm = TRUE)-0.1)
 
 predicted_value
+
+# print the point estimates and their confidence intervals of these median properties 
+predicted_value[, 29:31] 
 
 ```
 
