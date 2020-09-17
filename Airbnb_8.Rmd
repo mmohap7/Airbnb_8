@@ -287,9 +287,9 @@ median_per_neighborhood %>%
   ggplot(aes(
     x = reorder(neighbourhood_cleansed, median_price),
     y = median_price
-  ),
-  color = "#FF5A5F") +
-  geom_col() +
+  )) +
+    geom_col(fill = "#FF5A5F") +
+  scale_fill_manual(values="#FF5A5F")+
   labs(
     title = "Median price per night per neighborhood",
     x = "",
@@ -327,7 +327,8 @@ median_per_proptype %>%
     x = reorder(prop_type_simplified, desc(median_price)),
     y = median_price
   )) +
-  geom_col() +
+  geom_col(fill = "#FF5A5F") +
+  scale_fill_manual(values="#FF5A5F")+
   labs(
     title = "Median price per night per property type",
     x = "",
@@ -347,7 +348,8 @@ median_per_roomtype %>%
     x = reorder(room_type, desc(median_price)),
     y = median_price
   )) +
-  geom_col() +
+  geom_col(fill = "#FF5A5F") +
+  scale_fill_manual(values="#FF5A5F")+
   labs(
     title = "Median price per night per room type",
     x = "",
@@ -369,25 +371,20 @@ Following from this, we wanted to know what influence rating has on the price. F
 
 #Plotted a density graph to display the relationship with price in being a superhost
 listings_clean %>%
-ggplot(aes(
-    x = log(price),
-    #colour the graph by being a superhost or not and filtering out the NA values
-    colour = !is.na(host_is_superhost)
-  )) +
-  geom_density() +
-    labs(
-      title = "Density plot for prices on whether superhost is true/false",
-      x = "Price per night (log)",
-      y = "Density",
-      caption = "Source: AirBnB"
-    ) + 
-        scale_fill_discrete(
-                          name = NULL, 
-                          labels = c("Non-superhost", "Superhost")
-                          ) +
-      theme_classic() +
-      NULL
-
+  ggplot(aes( x = log(price),
+  #colour the graph by being a superhost or not and filtering out the NA values
+  colour = !is.na(host_is_superhost))) + 
+  geom_density() +    
+  labs(      
+      title = "Density plot for prices on whether host is superhost",
+      x = "price per night (log)",
+      y = "density",
+      caption = "Source: AirBnB",
+      color = "(Non)superhost\n"   ) + 
+      scale_color_manual(labels = c("Superhost", "Non superhost"), 
+                          values = c("#FF5A5F", "#00A699")) + 
+      theme_classic() + 
+  NULL
 
 
 #Plotted a histogram to display the distribution of ratings and to show if this is affected by being a superhost
@@ -407,12 +404,12 @@ listings_clean %>%
       y = "Count",
       caption = "Source: AirBnB"
     ) +
-  # change name of legend
-      # scale_fill_discrete(
-      #                     name = NULL, 
-      #                     labels = c("Non-superhost", "Superhost")
-      #                     ) +
-  #theme_classic() +
+  #change name of legend
+  scale_fill_discrete(
+                      name = NULL,
+                      labels = c("Non-superhost", "Superhost")
+                      ) +
+  theme_classic() +
   NULL
 
 #plotted a scatter graph showing the relationship between review score and price
@@ -431,7 +428,7 @@ listings_clean %>%
       x = "Review scores",
       y = "Price per night (log)",
       caption = "Source: Airbnb"
-    ) +
+    ) + 
   theme_classic() +
   NULL
 
@@ -884,6 +881,40 @@ vif(final_model)
 
 ```
 
+### Analysis of Coefficients in Final Model
+- Property Type
+Apartments have the lowest price. 
+Compared to an apartment, a town house has a 1.2% higher price, a house a 1.9% higher price and a condominium a 1.2% higher price.“Other” property types have a 7.6% higher price than apartments, which makes sense since it includes special properties such as house boats etc.
+
+- Number of Reviews
+Already one additional review on AirBnB increases the price of the place 0.02%
+
+- Review_scores_rating
+For every increase in the review score rating, the price rises by 0.13%
+
+- Room Type
+A shared room and private room will have the lowest prices, with 21.69% and 15.6% respectively less than an entire home. This is intuitive since you have to share rooms and/or share facilities, such as bathroom and kitchen with other people. Hotel rooms have the highest price with around 19% more than an entire home. 
+
+- Bathrooms & Bedrooms
+The number of bathrooms and bedrooms also have an influence on the price. An additional bathroom will increase the price by 5.4% and an additional bedroom by 4.6%. (both by roughly 5%).
+
+- Accommodates 
+Offering an additional accommodate rises the price by 3.6%
+
+- Superhost
+Being a super host can increase your price by 2.7%, so it might be worth it to make to superhost!
+
+- Neighbourhoods
+Looking at the neighbourhoods, we can also see clear trends there. Highest prices are found in the center, which is the case in most cities. There are 17.2% higher than in Amager. Prices in Brokvarterer are 2.7% higher than in Amager.
+The lowest prices are in Nordvest and the West (8.6% and 7.7% lower than in Amager), which are more residential areas.
+
+- Cancellation Policy
+Places with flexible cancellation policies have the lowest prices, those with moderate ones are 2.7% higher and those with strict ones 4.9%. The super strict ones have the highest prices with 13.5%
+
+- In conclusion, this model can help AirBnB hosts understand what drives AirBnB prices, e.g. which in neighborhoods one can demand higher prices, and learn which features customer accept to pay more for .
+
+
+
 ## Prediction
 
 We are planning to visit Copenhagen and want to stay in an AirBnB. We would like to look at AirBnB's that are apartments with a private room, have at least 10 reviews, and an average rating of at least 90. 
@@ -1007,10 +1038,8 @@ As the price distribution is **right skewed**, choosing mean as measure to predi
 ```{r printing predicted value}
 predicted_value <- model_predictions %>%
 
-<<<<<<< HEAD
   filter(fitted_price_final == median(fitted_price_final, na.rm = TRUE))
 
-=======
 ```
 
 print(predicted_value$lower_final) + print(predicted_value$fitted_price_final) + print(predicted_value$upper_final)
