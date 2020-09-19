@@ -72,7 +72,7 @@ To get an idea of the data structure, an exploratory data analysis is conducted.
 
 First of all, the data needs to be loaded. The clean_names() function is used to make the values consistent and neat, to help with the data wrangling.
 
-```{r cars, cache=TRUE}
+```{r cars, cache=TRUE, echo = FALSE}
 
 listings <- vroom("http://data.insideairbnb.com/denmark/hovedstaden/copenhagen/2020-06-26/data/listings.csv.gz") %>%
   
@@ -106,14 +106,14 @@ Having looked at the data, the following variables will be of importance through
 
 The next step is to check the data for the properties of the variables and if there are any missing or NA values that need to be addressed.
 
-```{r, exploration, echo=FALSE, cache=TRUE}
+```{r, exploration, echo=FALSE, cache=TRUE, echo = FALSE}
 
 # Look at the raw values
-glimpse(listings) %>%
+glimpse(listings)
 
 
-# Compute summary statistics of the variables of interest, or find NAs
-skim(listings) %>%
+# Compute summary statistics of the variables of interest, or find NA
+skim(listings)
 
 ```
 
@@ -124,7 +124,7 @@ From this list can be concluded that there are 28,523 values for 106 variables. 
 
 In this section we will clean the data and run summary statistics that will be visualised in the next section. First the values stored as characters are converted to numeric values and the $-sign removed.
 
-```{r cleaning data stored as character}
+```{r cleaning data stored as character, echo = FALSE}
 
 # Make price into a numeric variable
 listings$price = as.numeric(gsub("[\\$,]", "", listings$price)) 
@@ -139,7 +139,7 @@ listings$extra_people = as.numeric(gsub("[\\$,]", "", listings$extra_people))
 
 Following this, the NA's in the cleaning_fee values will be converted to zero. Assuming the NA's are from hosts not providing an input for cleaning fees, the NA's should equal zero.
 
-```{r cleaning data by reducing the NA}
+```{r cleaning data by reducing the NA, echo = FALSE}
 
 # Change NA cleaning fee values to 0, assuming that 0 is meant for NA
 listings <- listings %>%   
@@ -152,7 +152,7 @@ listings <- listings %>%
 
 The property type categorical variables has too many categories to be summarised. To reduce this, the 4 most substantial categories have been specified, the remainder will be classed as other.
 
-```{r cleaning data by reducing property type criteria}
+```{r cleaning data by reducing property type criteria, echo = FALSE}
 
 # Create a list of property types and the count
 listings%>% 
@@ -221,7 +221,7 @@ listings_clean <- listings %>%
 
 Let's have a look at the data.
 
-```{r skim the new list}
+```{r skim the new list, echo = FALSE}
 
 # Check if all the variables are in the correct type
 skim(listings_clean) 
@@ -237,7 +237,7 @@ Now that the data is clean, a selection of useful data has been made, and filter
 
 In order to get an idea on the concentration of apartment listings in the area of Copenhagen, we plotted a map showing the number of flat available for rent for 4 nights or less. We used clusters instead of point to make the map more readable and to get a better idea of the number of listings in each area.
 
-```{r mapping clusters}
+```{r mapping clusters, echo = FALSE}
 
 # Take the filtered listings with a min of 4 nights and create a map of the apartments in Copenhagen
 listings_filtered_4nights %>% 
@@ -258,7 +258,7 @@ The map shows the number of available flats are located in the city center. The 
 
 To gauge the price difference in each area in Copenhagen, we plotted a heatmap showing the more expensive areas in a brighter red colour. Also we plotted a bar chart to get an idea of the median price for each area. The reason for using median over mean is because the listings in Copenhagen have very extreme values and they skew the mean too much for certain areas.
 
-```{r heatmap of price}
+```{r heatmap of price, echo = FALSE,}
 #maps price to seven colors using quantiles
 qpal <- colorQuantile("Reds", listings_filtered_4nights$price, n = 7)
 
@@ -276,7 +276,7 @@ leaflet() %>%
 We can conclude that the harbour area in Copehagen has the most expensive listings. Therefore we suspect that location will have a high coefficient when we will be running te regression models.
 
 
-```{r neighborhood bar chart, message = FALSE}
+```{r neighborhood bar chart, echo = FALSE, message = FALSE}
 
 #Calculated median price per night for each neighborhood
 median_per_neighborhood <- listings_filtered_4nights %>% 
@@ -314,7 +314,7 @@ The histogram showed that among all the property types, the lowest median price 
 Median price per room type:
 The histogram showed that hotel rooms are generally more expensive than the other types of rooms available.
 
-```{r median prices accommodation types, message = FALSE}
+```{r median prices accommodation types, echo = FALSE, message = FALSE}
 
 # Calculate median price per night for each room type
 median_per_proptype <- listings_filtered_4nights %>% 
@@ -367,7 +367,7 @@ From this we can conclude that both room type and property type have an influenc
 
 Following from this, we wanted to know what influence rating has on the price. For this we used both data on the review scores and whether the listing is posted by a superhost.
 
-```{r rating plots, message = false}
+```{r rating plots, message= FALSE, echo = FALSE}
 
 #Plotted a density graph to display the relationship with price in being a superhost
 listings_clean %>%
@@ -438,7 +438,7 @@ From this we can conclude that being a superhost does have an influence on the p
 ### GGpairs
 
 To display a comprehensive overview of the correlation between variables and the price we plotted a GGpairs plot. Using all the selected variables.
-```{r ggpairs plot, message = FALSE}
+```{r ggpairs plot, message = FALSE, echo = FALSE}
 
 # Display the correlation between four important variables
 
@@ -455,7 +455,7 @@ listings_clean %>%
 ## Basic explanatory variables  
 
 Before we start with the regression modeling, we need to filter the data to represent 2 people staying for 4 nights, including the cleaning fee.
-```{r 4 nights 2 guests}
+```{r 4 nights 2 guests, echo = FALSE}
 
 # Create new variable for 4 nights using price, guests_included, cleaning_fee and extra_people
 listings_new <- listings_clean %>%
@@ -501,7 +501,7 @@ price_4_nights and log(price_4_nights), we can see clearly that log(price_4_nigh
 
 Fitting a regression model called model1 with the following explanatory variables: prop_type_simplified, number_of_reviews, and review_scores_rating
 
-```{r model1}
+```{r model1, echo = FALSE}
 
 # Create a new dataset with the new variable of log(price_4_nights)
 listings_log <- listings_new %>%
@@ -536,7 +536,7 @@ Property type (prop_type_simplified) is a significant predictor. Controlling for
 
 We want to determine if room_type is a significant predictor of the cost for 4 nights, given everything else in the model.
 
-```{r model2}
+```{r model2, echo = FALSE}
 
 # Create model2 by adding room_type to model1
 model2 <- lm(price_4_nights_log ~
@@ -569,7 +569,7 @@ Controlling for other variables, switching room type from entire house to hotel 
 
 Are the number of bathrooms, bedrooms, beds, or size of the house (accomodates) significant predictors of price_4_nights?
 
-```{r model3a}
+```{r model3a, echo = FALSE}
 
 # Create model3a by adding bathrooms, bedrooms, beds, accommodates to model2 
 model3a<-lm(price_4_nights_log ~
@@ -599,7 +599,7 @@ autoplot(model3a)
 The number of bathrooms, bedrooms and size of the house (accommodates) are  significant predictors of log10(price_4_nights) and are all positively related with price_4_nights, while number of beds is not a significant predictor. Coefficients show that each additional bathroom is associated with 0.06 increase in log10(price_4_nights); each additional bedroom is associated with 0.05 increase in log10(price_4_nights).
 There might be a problem with multi-collinearity since intuitively the number of bathrooms and bedrooms should have a positive relationship with size of the house. A further analysis on VIF shows that size of the house has slight correlation with other predictors but is within an acceptable range.
 
-```{r model3}
+```{r model3, echo = FALSE}
 
 # Create model3 by removing beds from model3a 
 model3<-lm(price_4_nights_log ~
@@ -630,7 +630,7 @@ autoplot(model3)
 
 Do superhosts command a pricing premium, after controlling for other variables?
 
-```{r model4}
+```{r model4, echo = FALSE}
 
 # Create model4 by adding host_is_superhost to model3
 model4<-lm(price_4_nights_log ~
@@ -664,7 +664,7 @@ Since the p-value for the estimate of the superhost coefficient is  significant 
 Since the p-value for the estimate of the superhost coefficient is  significant (with a p-value of 0.36 and a t-statistic of 0.9), it seems that superhosts do command a price premium from their guests in Copenhagen. Compared to non-superhost, being a superhost is associated with 0.03 increase in log10(price_4_nights).
 
 
-```{r model4b}
+```{r model4b, echo = FALSE}
 # Create model4b by adding host_is_superhost to model4 and create an interaction variable 
 model4b<-lm(price_4_nights_log ~
             prop_type_simplified +
@@ -698,7 +698,7 @@ Interaction variable host_is_superhost*review_scores_rating is not significant, 
 
 Most owners advertise the exact location of their listing (is_location_exact == TRUE), while a non-trivial proportion don’t. After controlling for other variables, is a listing’s exact location a significant predictor of price_4_nights?
 
-```{r model5}
+```{r model5, echo = FALSE}
 
 # Create model5 by adding is_location_exact == TRUE to model4
 model5<-lm(price_4_nights_log ~
@@ -727,7 +727,7 @@ autoplot(model5)
 A listing’s exact location variable has a p value of 0.34, and therefore is not a significant predictor of price_4_nights. Thus, we will not include it in the following models.
 
 
-> Model 4: 41% 
+> Model 5: 41% 
 
 
 
@@ -746,7 +746,7 @@ Additionally, the two Amager districts (Vest and Ost) are grouped together.
 In the West, Valby, Vanlose and Brønshøj-Husum are summarized.
 
 Lastly, Bispebjerg, often referred to as Nordvest, which is more of a residential neighbourhood, is its own cluster.
-```{r model6}
+```{r model6, echo = FALSE}
 
 # Create variable neighbourhood_simplified with 5 categories 
 listings_log <- listings_log %>%
@@ -796,7 +796,7 @@ We can see that all the neighbourhood variables are significant predictors of th
 
 What is the effect of cancellation_policy on price_4_nights, after we control for other variables?
 
-```{r model7}
+```{r model7, echo = FALSE}
 
 # Create model7 by adding cancellation_policy to model6
 model7<-lm(price_4_nights_log ~
@@ -834,7 +834,7 @@ The cancellation policy is a significant predictor on price, with a flexible pol
 
 After creating all these models, we now find to find our best model, our final model for predictions.
 
-```{r hux-copenhagen, echo=FALSE, warning=FALSE, message=FALSE, results="asis"}
+```{r hux-copenhagen, echo=FALSE, warning=FALSE, message=FALSE, results="asis", echo = FALSE}
 
 # Compare all models next to each other
 huxreg(model1, model2, model3, model4, model5, model6, model7,
@@ -858,7 +858,7 @@ Model 7 is the best model with the highest R2 so this will be the final model.
 
 ## Final model 
 Let's print the final model (no. 7).
-```{r final model}
+```{r final model, echo = FALSE}
 
 final_model <- lm(price_4_nights_log ~
                   prop_type_simplified +
@@ -921,7 +921,7 @@ We are planning to visit Copenhagen and want to stay in an AirBnB. We would like
 
 We will predict the total cost to stay at this AirBnB for 4 nights, including the appropriate 95% interval with the prediction.
 
-```{r predict-price, warning=FALSE}
+```{r predict-price, warning=FALSE, echo = FALSE}
 # Filter our the data by room_type, nr of reviews and rating
 listings_predict_log <- listings_log %>% 
   filter(room_type == "Private room",
@@ -950,7 +950,7 @@ model_predictions <- model_predictions_log  %>%
 
 Next we visualise the data to have a better understanding of the structure.
 
-```{r graph-predictions, warning=FALSE}
+```{r graph-predictions, warning=FALSE, echo = FALSE}
 
 # Change order of property types to have other in the end
 model_predictions$prop_type_simplified <- factor(model_predictions$prop_type_simplified, c("Apartment", "Condominium", "House", "Townhouse", "Other"))
@@ -996,7 +996,7 @@ ggplot(model_predictions, aes(x = fitted_price_final)) +
 
 ```
 
-```{r training and testing}
+```{r training and testing, echo = FALSE}
 
 # Splitting data in training and testing sets
 library(rsample)
@@ -1023,7 +1023,7 @@ rmse_test
 
 ```
 
-```{r printing the mean}
+```{r printing the mean, echo = FALSE}
 
 # Find mean and median of the fitted prices
 model_predictions %>%
@@ -1035,28 +1035,10 @@ model_predictions %>%
 
 As the price distribution is **right skewed**, choosing mean as measure to predict the final price wouldn't be economical so we've decided to use the median because it fits our budget.
 
-```{r printing predicted value}
+```{r printing predicted value, echo = FALSE}
 predicted_value <- model_predictions %>%
 
   filter(fitted_price_final == median(fitted_price_final, na.rm = TRUE))
-
-```
-
-print(predicted_value$lower_final) + print(predicted_value$fitted_price_final) + print(predicted_value$upper_final)
-
-=======
-# locate the median value property
-predicted_value <- model_predictions %>%
-  filter(fitted_price_final == median(fitted_price_final, na.rm = TRUE))
-  filter(fitted_price_final <= median(fitted_price_final, na.rm = TRUE), 
-         fitted_price_final >= median(fitted_price_final, na.rm = TRUE))
->>>>>>> 0e04536b9df3b4269912549b1ce7e7acfc6f8905
-
-predicted_value %>% 
-  select(listing_url, accommodates, price, cleaning_fee, extra_people, prop_type_simplified, room_type, review_scores_rating, bathrooms, bedrooms, beds, neighbourhood_cleansed, )
-
-# print the point estimates and their confidence intervals of these median properties 
-predicted_value[, 29:31] 
 
 ```
 
